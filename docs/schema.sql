@@ -30,15 +30,14 @@ CREATE TABLE subjects (
 CREATE TABLE attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
-    subject_id INT NOT NULL,
     marked_by INT NOT NULL,
     date DATE NOT NULL,
     status ENUM('present', 'absent', 'late') NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES users(id),
-    FOREIGN KEY (subject_id) REFERENCES subjects(id),
     FOREIGN KEY (marked_by) REFERENCES users(id),
-    UNIQUE KEY unique_attendance (student_id, subject_id, date)
+    UNIQUE KEY unique_attendance (student_id, date)
 );
 
 CREATE TABLE leave_requests (
