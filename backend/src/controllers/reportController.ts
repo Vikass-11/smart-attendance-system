@@ -4,35 +4,36 @@ import { getWeekRange, getMonthRange } from '../utils/dateHelpers';
 import PDFDocument from 'pdfkit';
 import { AuthenticatedRequest } from '../types';
 import type { DepartmentReportFilters } from '../models/reportModel';
+import apiResponse from '../utils/apiResponse';
 
 export const dailyReport = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const date = req.query.date as string;
   if (!date) {
-    res.status(400).json({ error: 'date is required' });
+    apiResponse.error(res, 'date is required', 400);
     return;
   }
 
   try {
     const data = await reportService.fetchDailyReport(date);
-    res.json(data);
+    apiResponse.success(res, data, 'Daily report');
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to generate daily report', details: err.message });
+    apiResponse.error(res, 'Failed to generate daily report', 500, err.message);
   }
 };
 
 export const weeklyReport = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const date = req.query.date as string;
   if (!date) {
-    res.status(400).json({ error: 'date is required (any date within the week)' });
+    apiResponse.error(res, 'date is required (any date within the week)', 400);
     return;
   }
 
   try {
     const { fromDate, toDate } = getWeekRange(date);
     const data = await reportService.fetchRangeReport(fromDate, toDate);
-    res.json({ fromDate, toDate, data });
+    apiResponse.success(res, { fromDate, toDate, data }, 'Weekly report');
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to generate weekly report', details: err.message });
+    apiResponse.error(res, 'Failed to generate weekly report', 500, err.message);
   }
 };
 
@@ -40,16 +41,16 @@ export const monthlyReport = async (req: AuthenticatedRequest, res: Response): P
   const month = req.query.month as string;
   const year = req.query.year as string;
   if (!month || !year) {
-    res.status(400).json({ error: 'month and year are required' });
+    apiResponse.error(res, 'month and year are required', 400);
     return;
   }
 
   try {
     const { fromDate, toDate } = getMonthRange(parseInt(month), parseInt(year));
     const data = await reportService.fetchRangeReport(fromDate, toDate);
-    res.json({ fromDate, toDate, data });
+    apiResponse.success(res, { fromDate, toDate, data }, 'Monthly report');
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to generate monthly report', details: err.message });
+    apiResponse.error(res, 'Failed to generate monthly report', 500, err.message);
   }
 };
 
@@ -80,7 +81,7 @@ export const institutionSummary = async (req: AuthenticatedRequest, res: Respons
     };
 
     const result = await reportService.fetchInstitutionSummary(fromDate, toDate, filters);
-    res.json(result);
+    apiResponse.success(res, result, 'Institution summary');
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to generate summary', details: err.message });
   }

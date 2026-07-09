@@ -1,5 +1,12 @@
 import { Response } from 'express';
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export const success = (res: Response, data: any, message = 'OK', status = 200) => {
   return res.status(status).json({ success: true, message, data });
 };
@@ -10,29 +17,19 @@ export const error = (res: Response, message = 'Internal Server Error', status =
   return res.status(status).json(payload);
 };
 
-export default { success, error };
-import { Response } from 'express';
-
-export interface PaginationMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
-
-interface SuccessOptions<T> {
+type SuccessOptions<T> = {
   data: T;
   message?: string;
   meta?: Record<string, unknown>;
   statusCode?: number;
-}
+};
 
-interface PaginatedOptions<T> {
+type PaginatedOptions<T> = {
   data: T;
   pagination: PaginationMeta;
   message?: string;
   statusCode?: number;
-}
+};
 
 export const sendSuccess = <T>(
   res: Response,
@@ -64,3 +61,5 @@ export const createPaginationMeta = (page: number, limit: number, total: number)
   total,
   totalPages: Math.max(1, Math.ceil(total / limit)),
 });
+
+export default { success, error, sendSuccess, sendPaginated, createPaginationMeta };
