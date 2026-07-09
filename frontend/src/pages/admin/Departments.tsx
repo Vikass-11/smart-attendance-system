@@ -28,7 +28,13 @@ const Departments = () => {
   };
 
   useEffect(() => {
-    loadData();
+    const timeoutId = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleAddDepartment = async (e: React.FormEvent) => {
