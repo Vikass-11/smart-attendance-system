@@ -7,12 +7,16 @@ import adminRoutes from './routes/adminRoutes';
 import reportRoutes from './routes/reportRoutes';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import setupSwagger from './swagger';
 
 const app: Application = express();
 
 app.use(cors());
 app.use(express.json());
 app.use(requestLogger);
+
+// OpenAPI docs
+setupSwagger(app);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

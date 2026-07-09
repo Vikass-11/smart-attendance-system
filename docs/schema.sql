@@ -40,6 +40,15 @@ CREATE TABLE attendance (
     UNIQUE KEY unique_attendance (student_id, date)
 );
 
+-- Index recommendations:
+-- 1) Index on `attendance.date` to speed up queries that fetch attendance by date (frequent for class view reports):
+--    CREATE INDEX idx_attendance_date ON attendance(date);
+-- 2) Index on `users.role` to accelerate queries filtering by role (student/faculty/admin):
+--    CREATE INDEX idx_users_role ON users(role);
+-- 3) Index on `users.department_id` to speed up joins when fetching users by department:
+--    CREATE INDEX idx_users_department ON users(department_id);
+-- Rationale: These are low-cost secondary indexes that target frequent WHERE clauses and JOIN keys used by reporting and listing endpoints. Add them if profiling indicates benefit on large datasets.
+
 CREATE TABLE leave_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
