@@ -1,5 +1,6 @@
 import db from '../config/db';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import type { PoolConnection } from 'mysql2/promise';
 
 export const submitLeaveRequest = async (
   studentId: number,
@@ -49,6 +50,19 @@ export const updateLeaveStatus = async (
   reviewedBy: number
 ): Promise<ResultSetHeader> => {
   const [result] = await db.query<ResultSetHeader>(
+    `UPDATE leave_requests SET status = ?, reviewed_by = ? WHERE id = ?`,
+    [status, reviewedBy, id]
+  );
+  return result;
+};
+
+export const getLeaveRequestByIdWithConn = async (conn: PoolConnection, id: number): Promise<RowDataPacket | undefined> => {
+  const [rows] = await conn.query<RowDataPacket[]>(`SELECT * FROM leave_requests WHERE id = ? FOR UPDATE`, [id]);
+  return rows[0];
+};
+
+export const updateLeaveStatusWithConn = async (conn: PoolConnection, id: number, status: string, reviewedBy: number): Promise<ResultSetHeader> => {
+  const [result] = await conn.query<ResultSetHeader>(
     `UPDATE leave_requests SET status = ?, reviewed_by = ? WHERE id = ?`,
     [status, reviewedBy, id]
   );

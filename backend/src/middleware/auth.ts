@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../services/tokenService';
 import { AuthenticatedRequest } from '../types';
+import { AppError } from './errorHandler';
 
 export const verifyToken = (
   req: AuthenticatedRequest,
@@ -10,7 +11,7 @@ export const verifyToken = (
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'No token provided' });
+    next(new AppError('No token provided', 401, 'UNAUTHORIZED'));
     return;
   }
 
@@ -20,15 +21,15 @@ export const verifyToken = (
     const decoded = verifyAccessToken(token);
     req.user = decoded;
     next();
-  } catch {
-    res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (err: any) {
+    next(new AppError('Invalid or expired token', 401, 'UNAUTHORIZED'));
   }
 };
 
 export const requireRole = (...allowedRoles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
-      res.status(403).json({ error: 'Insufficient permissions' });
+      next(new AppError('Insufficient permissions', 403, 'FORBIDDEN'));
       return;
     }
 

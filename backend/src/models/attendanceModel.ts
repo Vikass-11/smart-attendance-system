@@ -1,5 +1,6 @@
 import db from '../config/db';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import type { PoolConnection } from 'mysql2/promise';
 
 export const markAttendance = async (
   studentId: number,
@@ -8,6 +9,22 @@ export const markAttendance = async (
   status: string
 ): Promise<ResultSetHeader> => {
   const [result] = await db.query<ResultSetHeader>(
+    `INSERT INTO attendance (student_id, marked_by, date, status)
+     VALUES (?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE status = VALUES(status), marked_by = VALUES(marked_by)`,
+    [studentId, markedBy, date, status]
+  );
+  return result;
+};
+
+export const markAttendanceWithConn = async (
+  conn: PoolConnection,
+  studentId: number,
+  markedBy: number,
+  date: string,
+  status: string
+): Promise<ResultSetHeader> => {
+  const [result] = await conn.query<ResultSetHeader>(
     `INSERT INTO attendance (student_id, marked_by, date, status)
      VALUES (?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE status = VALUES(status), marked_by = VALUES(marked_by)`,
