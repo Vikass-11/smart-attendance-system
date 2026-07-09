@@ -58,7 +58,7 @@ export const institutionSummary = async (req: AuthenticatedRequest, res: Respons
   const fromDate = req.query.fromDate as string;
   const toDate = req.query.toDate as string;
   if (!fromDate || !toDate) {
-    res.status(400).json({ error: 'fromDate and toDate are required' });
+    apiResponse.error(res, 'fromDate and toDate are required', 400);
     return;
   }
 
@@ -83,7 +83,7 @@ export const institutionSummary = async (req: AuthenticatedRequest, res: Respons
     const result = await reportService.fetchInstitutionSummary(fromDate, toDate, filters);
     apiResponse.success(res, result, 'Institution summary');
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to generate summary', details: err.message });
+    apiResponse.error(res, 'Failed to generate summary', 500, err.message);
   }
 };
 
@@ -91,7 +91,7 @@ export const exportCSV = async (req: AuthenticatedRequest, res: Response): Promi
   const fromDate = req.query.fromDate as string;
   const toDate = req.query.toDate as string;
   if (!fromDate || !toDate) {
-    res.status(400).json({ error: 'fromDate and toDate are required' });
+    apiResponse.error(res, 'fromDate and toDate are required', 400);
     return;
   }
 
@@ -101,7 +101,7 @@ export const exportCSV = async (req: AuthenticatedRequest, res: Response): Promi
     res.attachment(`attendance-report-${fromDate}-to-${toDate}.csv`);
     res.send(csv);
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to export CSV', details: err.message });
+    apiResponse.error(res, 'Failed to export CSV', 500, err.message);
   }
 };
 
@@ -109,7 +109,7 @@ export const exportPDF = async (req: AuthenticatedRequest, res: Response): Promi
   const fromDate = req.query.fromDate as string;
   const toDate = req.query.toDate as string;
   if (!fromDate || !toDate) {
-    res.status(400).json({ error: 'fromDate and toDate are required' });
+    apiResponse.error(res, 'fromDate and toDate are required', 400);
     return;
   }
 
@@ -135,6 +135,6 @@ export const exportPDF = async (req: AuthenticatedRequest, res: Response): Promi
 
     doc.end();
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to export PDF', details: err.message });
+    apiResponse.error(res, 'Failed to export PDF', 500, err.message);
   }
 };
