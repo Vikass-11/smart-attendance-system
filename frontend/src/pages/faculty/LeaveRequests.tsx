@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 interface PendingLeave {
   id: number;
@@ -11,6 +12,7 @@ interface PendingLeave {
 }
 
 const LeaveRequests = () => {
+  const { invalidate } = useDashboardStore();
   const [pendingLeaves, setPendingLeaves] = useState<PendingLeave[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +36,7 @@ const LeaveRequests = () => {
     try {
       await apiClient.patch(`/leave/${id}/review`, { decision });
       await loadData();
+      invalidate('faculty-overview');
     } catch (err) {
       console.error('Failed to review leave request', err);
     }
