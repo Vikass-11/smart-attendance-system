@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 interface UserRow {
   id: number;
@@ -11,6 +12,7 @@ interface UserRow {
 }
 
 const UserManagement = () => {
+  const { invalidate } = useDashboardStore();
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,7 @@ const UserManagement = () => {
     try {
       await apiClient.delete(`/admin/users/${id}`);
       await loadData();
+      invalidate('admin-overview');
     } catch (err) {
       console.error('Failed to delete user', err);
     }
