@@ -19,7 +19,8 @@ const Reports = () => {
       void (async () => {
         try {
           const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
-          const breakdown = res.data?.data?.departmentBreakdown ?? res.data?.departmentBreakdown ?? [];
+          const breakdownRaw = res.data?.data?.departmentBreakdown ?? res.data?.departmentBreakdown ?? [];
+          const breakdown = Array.isArray(breakdownRaw) ? breakdownRaw : breakdownRaw?.rows ?? [];
           setDeptBreakdown(breakdown);
         } catch (err) {
           console.error('Failed to load reports', err);

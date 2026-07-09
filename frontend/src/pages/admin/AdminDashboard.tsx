@@ -57,7 +57,8 @@ const AdminDashboard = () => {
           setUsers(usersRes.data?.data ?? usersRes.data);
           setDepartments(deptRes.data?.data ?? deptRes.data);
           setSummary(summaryRes.data?.data?.summary ?? summaryRes.data?.summary ?? null);
-          setDeptBreakdown(summaryRes.data?.data?.departmentBreakdown ?? summaryRes.data?.departmentBreakdown ?? []);
+          const deptRaw = summaryRes.data?.data?.departmentBreakdown ?? summaryRes.data?.departmentBreakdown ?? [];
+          setDeptBreakdown(Array.isArray(deptRaw) ? deptRaw : deptRaw?.rows ?? []);
         } catch (err) {
           console.error('Failed to load admin dashboard data', err);
         } finally {
@@ -82,7 +83,8 @@ const AdminDashboard = () => {
       setUsers(usersRes.data?.data ?? usersRes.data);
       setDepartments(deptRes.data?.data ?? deptRes.data);
       setSummary(summaryRes.data?.data?.summary ?? summaryRes.data?.summary ?? null);
-      setDeptBreakdown(summaryRes.data?.data?.departmentBreakdown ?? summaryRes.data?.departmentBreakdown ?? []);
+      const deptRaw = summaryRes.data?.data?.departmentBreakdown ?? summaryRes.data?.departmentBreakdown ?? [];
+      setDeptBreakdown(Array.isArray(deptRaw) ? deptRaw : deptRaw?.rows ?? []);
     } catch (err) {
       console.error('Failed to load admin dashboard data', err);
     } finally {
