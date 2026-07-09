@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import apiClient from '../api/axiosClient';
@@ -21,7 +21,8 @@ const Register = () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       await apiClient.post('/auth/register', { name, role });
-      navigate('/dashboard');
+      await signOut(auth);
+      navigate('/login?registered=true');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed');
     } finally {
