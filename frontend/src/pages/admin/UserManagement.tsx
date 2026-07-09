@@ -30,7 +30,13 @@ const UserManagement = () => {
   };
 
   useEffect(() => {
-    loadData();
+    const timeoutId = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
