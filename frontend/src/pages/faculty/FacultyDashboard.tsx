@@ -60,7 +60,13 @@ const FacultyDashboard = () => {
   };
 
   useEffect(() => {
-    loadData();
+    const timeoutId = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleStatusChange = (studentId: number, status: string) => {
@@ -79,7 +85,7 @@ const FacultyDashboard = () => {
       );
       setSaveMessage(`Saved attendance for ${entries.length} student(s).`);
       setAttendanceMap({});
-    } catch (err: any) {
+    } catch {
       setSaveMessage('Failed to save attendance for one or more students.');
     } finally {
       setSaving(false);
