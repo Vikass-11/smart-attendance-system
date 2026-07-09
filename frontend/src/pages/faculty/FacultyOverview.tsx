@@ -47,10 +47,14 @@ const FacultyOverview = () => {
             apiClient.get('/admin/users?role=student'),
           ]);
 
+          const lowData = lowRes.data?.data ?? lowRes.data;
+          const leaveData = leaveRes.data?.data ?? leaveRes.data;
+          const studentsData = studentsRes.data?.data ?? studentsRes.data;
+
           const result = {
-            lowAttendance: lowRes.data,
-            pendingCount: leaveRes.data.length,
-            studentCount: studentsRes.data.length,
+            lowAttendance: Array.isArray(lowData) ? lowData : [],
+            pendingCount: Array.isArray(leaveData) ? leaveData.length : (leaveData?.length ?? 0),
+            studentCount: Array.isArray(studentsData) ? studentsData.length : (studentsData?.length ?? 0),
           };
 
           setLowAttendance(result.lowAttendance);

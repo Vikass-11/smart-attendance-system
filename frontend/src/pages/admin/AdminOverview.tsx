@@ -25,7 +25,8 @@ const AdminOverview = () => {
       void (async () => {
         try {
           const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
-          setSummary(res.data.summary);
+          const summaryObj = res.data?.data?.summary ?? res.data?.summary ?? null;
+          setSummary(summaryObj);
         } catch (err) {
           console.error('Failed to load summary', err);
         } finally {
