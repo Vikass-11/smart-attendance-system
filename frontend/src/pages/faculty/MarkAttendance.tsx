@@ -31,7 +31,13 @@ const MarkAttendance = () => {
   };
 
   useEffect(() => {
-    loadStudents();
+    const timeoutId = window.setTimeout(() => {
+      void loadStudents();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleStatusChange = (studentId: number, status: string) => {
