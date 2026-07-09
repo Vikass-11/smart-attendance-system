@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { Building2, Users, FileText } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
-import { useAuth } from '../../context/AuthContext';
-import { useDashboardStore } from '../../store/dashboardStore';
+import { useAuth } from '../../hooks/useAuth';
 
 interface Summary {
   total_students: number;
@@ -15,35 +14,30 @@ interface Summary {
 
 const AdminOverview = () => {
   const { appUser } = useAuth();
-  const { getCached, setCache } = useDashboardStore();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
 
   const today = new Date().toISOString().split('T')[0];
   const monthStart = today.slice(0, 8) + '01';
-  const cacheKey = 'admin-overview';
 
   useEffect(() => {
-    const loadData = async () => {
-      const cached = getCached(cacheKey);
-      if (cached) {
-        setSummary(cached);
-        setLoading(false);
-        return;
-      }
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
+          setSummary(res.data.summary);
+        } catch (err) {
+          console.error('Failed to load summary', err);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 0);
 
-      try {
-        const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
-        setSummary(res.data.summary);
-        setCache(cacheKey, res.data.summary);
-      } catch (err) {
-        console.error('Failed to load summary', err);
-      } finally {
-        setLoading(false);
-      }
+    return () => {
+      window.clearTimeout(timeoutId);
     };
-    loadData();
-  }, []);
+  }, [monthStart, today]);
 
   if (loading) return <Layout><p>Loading...</p></Layout>;
 
