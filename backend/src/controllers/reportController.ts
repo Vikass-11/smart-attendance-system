@@ -3,6 +3,7 @@ import * as reportService from '../services/reportService';
 import { getWeekRange, getMonthRange } from '../utils/dateHelpers';
 import PDFDocument from 'pdfkit';
 import { AuthenticatedRequest } from '../types';
+import type { DepartmentReportFilters } from '../models/reportModel';
 
 export const dailyReport = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const date = req.query.date as string;
@@ -61,7 +62,24 @@ export const institutionSummary = async (req: AuthenticatedRequest, res: Respons
   }
 
   try {
-    const result = await reportService.fetchInstitutionSummary(fromDate, toDate);
+    // Parse optional filters from query string with sensible defaults
+    const page = parseInt((req.query.page as string) || '1', 10) || 1;
+    const limit = parseInt((req.query.limit as string) || '10', 10) || 10;
+    const offset = (page - 1) * limit;
+    const search = (req.query.search as string) || undefined;
+    const sortBy = ((req.query.sortBy as DepartmentReportFilters['sortBy']) || 'department') as DepartmentReportFilters['sortBy'];
+    const sortOrder = ((req.query.sortOrder as DepartmentReportFilters['sortOrder']) || 'asc') as DepartmentReportFilters['sortOrder'];
+
+    const filters: DepartmentReportFilters = {
+      search,
+      page,
+      limit,
+      offset,
+      sortBy,
+      sortOrder,
+    };
+
+    const result = await reportService.fetchInstitutionSummary(fromDate, toDate, filters);
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to generate summary', details: err.message });
