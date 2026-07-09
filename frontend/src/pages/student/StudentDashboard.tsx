@@ -71,9 +71,9 @@ const StudentDashboard = () => {
           ]);
 
           const result = {
-            percentage: pctRes.data,
-            history: historyRes.data,
-            leaveRequests: leaveRes.data,
+            percentage: pctRes.data?.data ?? pctRes.data,
+            history: historyRes.data?.data ?? historyRes.data,
+            leaveRequests: leaveRes.data?.data ?? leaveRes.data,
           };
 
           setPercentage(result.percentage);
@@ -115,9 +115,9 @@ const StudentDashboard = () => {
       ]);
 
       const result = {
-        percentage: pctRes.data,
-        history: historyRes.data,
-        leaveRequests: leaveRes.data,
+        percentage: pctRes.data?.data ?? pctRes.data,
+        history: historyRes.data?.data ?? historyRes.data,
+        leaveRequests: leaveRes.data?.data ?? leaveRes.data,
       };
 
       setPercentage(result.percentage);
