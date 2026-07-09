@@ -49,9 +49,9 @@ const FacultyDashboard = () => {
         apiClient.get('/leave/pending'),
         apiClient.get('/attendance/low-attendance?threshold=75'),
       ]);
-      setStudents(usersRes.data);
-      setPendingLeaves(leaveRes.data);
-      setLowAttendance(lowRes.data);
+      setStudents(usersRes.data?.data ?? usersRes.data);
+      setPendingLeaves(leaveRes.data?.data ?? leaveRes.data);
+      setLowAttendance(lowRes.data?.data ?? lowRes.data);
     } catch (err) {
       console.error('Failed to load faculty dashboard data', err);
     } finally {

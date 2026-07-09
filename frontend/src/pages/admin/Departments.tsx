@@ -19,7 +19,9 @@ const Departments = () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/admin/departments');
-      setDepartments(res.data);
+      // backend returns envelope: { success, message, data }
+      const data = res.data?.data ?? res.data;
+      setDepartments(data);
     } catch (err) {
       console.error('Failed to load departments', err);
     } finally {

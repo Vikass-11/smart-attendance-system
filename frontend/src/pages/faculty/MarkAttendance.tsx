@@ -22,7 +22,7 @@ const MarkAttendance = () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/admin/users?role=student');
-      setStudents(res.data);
+      setStudents(res.data?.data ?? res.data);
     } catch (err) {
       console.error('Failed to load students', err);
     } finally {

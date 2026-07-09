@@ -54,10 +54,10 @@ const AdminDashboard = () => {
             apiClient.get('/admin/departments'),
             apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`),
           ]);
-          setUsers(usersRes.data);
-          setDepartments(deptRes.data);
-          setSummary(summaryRes.data.summary);
-          setDeptBreakdown(summaryRes.data.departmentBreakdown);
+          setUsers(usersRes.data?.data ?? usersRes.data);
+          setDepartments(deptRes.data?.data ?? deptRes.data);
+          setSummary(summaryRes.data?.data?.summary ?? summaryRes.data?.summary ?? null);
+          setDeptBreakdown(summaryRes.data?.data?.departmentBreakdown ?? summaryRes.data?.departmentBreakdown ?? []);
         } catch (err) {
           console.error('Failed to load admin dashboard data', err);
         } finally {
@@ -79,10 +79,10 @@ const AdminDashboard = () => {
         apiClient.get('/admin/departments'),
         apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`),
       ]);
-      setUsers(usersRes.data);
-      setDepartments(deptRes.data);
-      setSummary(summaryRes.data.summary);
-      setDeptBreakdown(summaryRes.data.departmentBreakdown);
+      setUsers(usersRes.data?.data ?? usersRes.data);
+      setDepartments(deptRes.data?.data ?? deptRes.data);
+      setSummary(summaryRes.data?.data?.summary ?? summaryRes.data?.summary ?? null);
+      setDeptBreakdown(summaryRes.data?.data?.departmentBreakdown ?? summaryRes.data?.departmentBreakdown ?? []);
     } catch (err) {
       console.error('Failed to load admin dashboard data', err);
     } finally {

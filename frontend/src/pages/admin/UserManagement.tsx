@@ -21,7 +21,7 @@ const UserManagement = () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/admin/users');
-      setUsers(res.data);
+      setUsers(res.data?.data ?? res.data);
     } catch (err) {
       console.error('Failed to load users', err);
     } finally {
@@ -43,7 +43,7 @@ const UserManagement = () => {
     e.preventDefault();
     try {
       const res = await apiClient.get(`/admin/users?search=${encodeURIComponent(search)}`);
-      setUsers(res.data);
+      setUsers(res.data?.data ?? res.data);
     } catch (err) {
       console.error('Search failed', err);
     }

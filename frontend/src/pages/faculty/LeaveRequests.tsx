@@ -20,7 +20,7 @@ const LeaveRequests = () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/leave/pending');
-      setPendingLeaves(res.data);
+      setPendingLeaves(res.data?.data ?? res.data);
     } catch (err) {
       console.error('Failed to load leave requests', err);
     } finally {
