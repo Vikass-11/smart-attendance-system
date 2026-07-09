@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 interface AttendanceRecord {
   id: number;
@@ -18,6 +19,7 @@ interface LeaveRequest {
 }
 
 const StudentDashboard = () => {
+  const { getCached, setCache, invalidate } = useDashboardStore();
   const [percentage, setPercentage] = useState<{ totalDays: number; presentDays: number; percentage: number } | null>(null);
   const [history, setHistory] = useState<AttendanceRecord[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
@@ -29,17 +31,39 @@ const StudentDashboard = () => {
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const loadData = async () => {
+  const cacheKey = 'student-dashboard';
+
+  const loadData = async (skipCache = false) => {
     setLoading(true);
+
+    if (!skipCache) {
+      const cached = getCached(cacheKey);
+      if (cached) {
+        setPercentage(cached.percentage);
+        setHistory(cached.history);
+        setLeaveRequests(cached.leaveRequests);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const [pctRes, historyRes, leaveRes] = await Promise.all([
         apiClient.get('/attendance/my-percentage'),
         apiClient.get('/attendance/my-history'),
         apiClient.get('/leave/my-requests'),
       ]);
-      setPercentage(pctRes.data);
-      setHistory(historyRes.data);
-      setLeaveRequests(leaveRes.data);
+
+      const result = {
+        percentage: pctRes.data,
+        history: historyRes.data,
+        leaveRequests: leaveRes.data,
+      };
+
+      setPercentage(result.percentage);
+      setHistory(result.history);
+      setLeaveRequests(result.leaveRequests);
+      setCache(cacheKey, result);
     } catch (err) {
       console.error('Failed to load dashboard data', err);
     } finally {
@@ -61,7 +85,8 @@ const StudentDashboard = () => {
       setReason('');
       setFromDate('');
       setToDate('');
-      await loadData();
+      invalidate(cacheKey);
+      await loadData(true);
     } catch (err: any) {
       setSubmitError(err.response?.data?.error || 'Failed to submit leave request');
     } finally {
