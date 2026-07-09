@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import { useDashboardStore } from '../../store/dashboardStore';
+import { leaveSchema } from '../../schemas/leaveSchema';
+import type { LeaveFormData } from '../../schemas/leaveSchema';
 
 interface AttendanceRecord {
   id: number;
@@ -24,12 +28,17 @@ const StudentDashboard = () => {
   const [history, setHistory] = useState<AttendanceRecord[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [reason, setReason] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<LeaveFormData>({
+    resolver: zodResolver(leaveSchema),
+  });
 
   const cacheKey = 'student-dashboard';
 
@@ -75,16 +84,13 @@ const StudentDashboard = () => {
     loadData();
   }, []);
 
-  const handleSubmitLeave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmitLeave = async (data: LeaveFormData) => {
     setSubmitError('');
     setSubmitting(true);
 
     try {
-      await apiClient.post('/leave/submit', { reason, fromDate, toDate });
-      setReason('');
-      setFromDate('');
-      setToDate('');
+      await apiClient.post('/leave/submit', data);
+      reset();
       invalidate(cacheKey);
       await loadData(true);
     } catch (err: any) {
@@ -141,38 +147,35 @@ const StudentDashboard = () => {
 
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="font-semibold mb-4">Submit Leave Request</h2>
-          <form onSubmit={handleSubmitLeave} className="space-y-3">
+          <form onSubmit={handleSubmit(onSubmitLeave)} className="space-y-3" noValidate>
             {submitError && <p className="text-red-600 text-sm">{submitError}</p>}
             <div>
               <label className="block text-xs text-gray-500 mb-1">Reason</label>
               <input
                 type="text"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
+                {...register('reason')}
                 className="w-full border rounded px-3 py-2 text-sm"
-                required
               />
+              {errors.reason && <p className="text-red-600 text-xs mt-1">{errors.reason.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">From</label>
                 <input
                   type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
+                  {...register('fromDate')}
                   className="w-full border rounded px-3 py-2 text-sm"
-                  required
                 />
+                {errors.fromDate && <p className="text-red-600 text-xs mt-1">{errors.fromDate.message}</p>}
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">To</label>
                 <input
                   type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
+                  {...register('toDate')}
                   className="w-full border rounded px-3 py-2 text-sm"
-                  required
                 />
+                {errors.toDate && <p className="text-red-600 text-xs mt-1">{errors.toDate.message}</p>}
               </div>
             </div>
             <button
