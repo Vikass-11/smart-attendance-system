@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 interface Department {
   id: number;
@@ -8,6 +9,7 @@ interface Department {
 }
 
 const Departments = () => {
+  const { invalidate } = useDashboardStore();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [newDeptName, setNewDeptName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -37,6 +39,7 @@ const Departments = () => {
       await apiClient.post('/admin/departments', { name: newDeptName });
       setNewDeptName('');
       await loadData();
+      invalidate('admin-overview');
     } catch (err) {
       console.error('Failed to add department', err);
     } finally {
