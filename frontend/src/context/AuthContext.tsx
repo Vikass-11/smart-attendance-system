@@ -14,8 +14,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         const res = await apiClient.get('/auth/me');
 
+        // backend uses a consistent envelope: { success, message, data }
+        // data may be either the user object or { user }
+        const user = res.data?.data?.user ?? res.data?.data ?? null;
+
         if (isMounted) {
-          setAppUser(res.data.user);
+          setAppUser(user);
         }
       } catch {
         if (isMounted) {
@@ -37,7 +41,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     const res = await apiClient.post('/auth/login', { email, password });
-    setAppUser(res.data.user);
+    const user = res.data?.data?.user ?? res.data?.data ?? null;
+    setAppUser(user);
   };
 
   const logout = async () => {
