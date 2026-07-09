@@ -3,13 +3,19 @@ import { Link } from 'react-router-dom';
 import { CalendarCheck, ClipboardList, AlertTriangle } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 interface LowAttendanceStudent {
   id: number;
   name: string;
   percentage: number;
+}
+
+interface FacultyOverviewCache {
+  lowAttendance: LowAttendanceStudent[];
+  pendingCount: number;
+  studentCount: number;
 }
 
 const FacultyOverview = () => {
@@ -21,44 +27,48 @@ const FacultyOverview = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadData = async () => {
-      const cacheKey = 'faculty-overview';
-      const cached = getCached(cacheKey);
+    const cacheKey = 'faculty-overview';
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        const cached = getCached<FacultyOverviewCache>(cacheKey);
 
-      if (cached) {
-        setLowAttendance(cached.lowAttendance);
-        setPendingCount(cached.pendingCount);
-        setStudentCount(cached.studentCount);
-        setLoading(false);
-        return;
-      }
+        if (cached) {
+          setLowAttendance(cached.lowAttendance);
+          setPendingCount(cached.pendingCount);
+          setStudentCount(cached.studentCount);
+          setLoading(false);
+          return;
+        }
 
-      try {
-        const [lowRes, leaveRes, studentsRes] = await Promise.all([
-          apiClient.get('/attendance/low-attendance?threshold=75'),
-          apiClient.get('/leave/pending'),
-          apiClient.get('/admin/users?role=student'),
-        ]);
+        try {
+          const [lowRes, leaveRes, studentsRes] = await Promise.all([
+            apiClient.get('/attendance/low-attendance?threshold=75'),
+            apiClient.get('/leave/pending'),
+            apiClient.get('/admin/users?role=student'),
+          ]);
 
-        const result = {
-          lowAttendance: lowRes.data,
-          pendingCount: leaveRes.data.length,
-          studentCount: studentsRes.data.length,
-        };
+          const result = {
+            lowAttendance: lowRes.data,
+            pendingCount: leaveRes.data.length,
+            studentCount: studentsRes.data.length,
+          };
 
-        setLowAttendance(result.lowAttendance);
-        setPendingCount(result.pendingCount);
-        setStudentCount(result.studentCount);
-        setCache(cacheKey, result);
-      } catch (err) {
-        console.error('Failed to load overview data', err);
-      } finally {
-        setLoading(false);
-      }
+          setLowAttendance(result.lowAttendance);
+          setPendingCount(result.pendingCount);
+          setStudentCount(result.studentCount);
+          setCache(cacheKey, result);
+        } catch (err) {
+          console.error('Failed to load overview data', err);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
     };
-
-    loadData();
-  }, []);
+  }, [getCached, setCache]);
 
   if (loading) return <Layout><p>Loading...</p></Layout>;
 
