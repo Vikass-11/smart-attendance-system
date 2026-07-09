@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 interface StudentUser {
   id: number;
@@ -9,6 +10,7 @@ interface StudentUser {
 }
 
 const MarkAttendance = () => {
+  const { invalidate } = useDashboardStore();
   const [students, setStudents] = useState<StudentUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [markDate, setMarkDate] = useState(new Date().toISOString().split('T')[0]);
@@ -48,6 +50,7 @@ const MarkAttendance = () => {
       );
       setSaveMessage(`Saved attendance for ${entries.length} student(s).`);
       setAttendanceMap({});
+      invalidate('faculty-overview');
     } catch {
       setSaveMessage('Failed to save attendance for one or more students.');
     } finally {
