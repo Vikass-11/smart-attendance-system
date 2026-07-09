@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .gradient-mesh {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gradient-mesh::before,
+  .gradient-mesh::after {
+    content: '';
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  .gradient-mesh::before {
+    width: 500px;
+    height: 500px;
+    background: #6366f1;
+    top: -100px;
+    left: -100px;
+  }
+
+  .gradient-mesh::after {
+    width: 400px;
+    height: 400px;
+    background: #22d3ee;
+    bottom: -80px;
+    right: -80px;
+    animation-delay: -10s;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(60px, 40px); }
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+}
