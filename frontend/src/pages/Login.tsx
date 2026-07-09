@@ -1,27 +1,38 @@
 import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, CheckCircle2 } from 'lucide-react';
-import { auth } from '../config/firebase';
+import type { AxiosError } from 'axios';
+import { useAuth } from '../hooks/useAuth';
+import { loginSchema } from '../schemas/authSchemas';
+import type { LoginFormData } from '../schemas/authSchemas';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const justRegistered = searchParams.get('registered') === 'true';
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    setApiError('');
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await login(data.email, data.password);
       navigate('/dashboard');
-    } catch {
-      setError('Invalid email or password');
+    } catch (error) {
+      const err = error as AxiosError<{ error?: string }>;
+      setApiError(err.response?.data?.error ?? 'Invalid email or password');
     } finally {
       setLoading(false);
     }
@@ -47,26 +58,25 @@ const Login = () => {
           </div>
         )}
 
-        {error && (
+        {apiError && (
           <div className="text-red-300 text-sm mb-4 bg-red-500/10 border border-red-400/20 rounded-lg p-3">
-            {error}
+            {apiError}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 className="w-full bg-white/5 border border-white/15 text-white placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 placeholder="you@institution.edu"
-                required
               />
             </div>
+            {errors.email && <p className="text-red-300 text-xs mt-1">{errors.email.message}</p>}
           </div>
 
           <div>
@@ -75,13 +85,12 @@ const Login = () => {
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...register('password')}
                 className="w-full bg-white/5 border border-white/15 text-white placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 placeholder="••••••••"
-                required
               />
             </div>
+            {errors.password && <p className="text-red-300 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
           <button
