@@ -9,14 +9,14 @@ import AdminOverview from './pages/admin/AdminOverview';
 import Departments from './pages/admin/Departments';
 import UserManagement from './pages/admin/UserManagement';
 import Reports from './pages/admin/Reports';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './hooks/useAuth';
 
 function App() {
-  const { firebaseUser, appUser, loading } = useAuth();
+  const { appUser, loading } = useAuth();
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
-  if (!firebaseUser) {
+  if (!appUser) {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -28,13 +28,13 @@ function App() {
 
   return (
     <Routes>
-      {appUser?.role === 'student' && (
+      {appUser.role === 'student' && (
         <>
           <Route path="/dashboard" element={<StudentDashboard />} />
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </>
       )}
-      {appUser?.role === 'faculty' && (
+      {appUser.role === 'faculty' && (
         <>
           <Route path="/dashboard" element={<FacultyOverview />} />
           <Route path="/dashboard/attendance" element={<MarkAttendance />} />
@@ -42,7 +42,7 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </>
       )}
-      {appUser?.role === 'admin' && (
+      {appUser.role === 'admin' && (
         <>
           <Route path="/dashboard" element={<AdminOverview />} />
           <Route path="/dashboard/departments" element={<Departments />} />
