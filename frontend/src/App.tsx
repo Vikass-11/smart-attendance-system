@@ -5,7 +5,10 @@ import StudentDashboard from './pages/student/StudentDashboard';
 import FacultyOverview from './pages/faculty/FacultyOverview';
 import MarkAttendance from './pages/faculty/MarkAttendance';
 import LeaveRequests from './pages/faculty/LeaveRequests';
-import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminOverview from './pages/admin/AdminOverview';
+import Departments from './pages/admin/Departments';
+import UserManagement from './pages/admin/UserManagement';
+import Reports from './pages/admin/Reports';
 import { useAuth } from './context/AuthContext';
 
 function App() {
@@ -41,7 +44,10 @@ function App() {
       )}
       {appUser?.role === 'admin' && (
         <>
-          <Route path="/dashboard" element={<AdminDashboard />} />
+          <Route path="/dashboard" element={<AdminOverview />} />
+          <Route path="/dashboard/departments" element={<Departments />} />
+          <Route path="/dashboard/users" element={<UserManagement />} />
+          <Route path="/dashboard/reports" element={<Reports />} />
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </>
       )}
