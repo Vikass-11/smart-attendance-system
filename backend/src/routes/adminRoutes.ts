@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { verifyToken, requireRole } from '../middleware/auth';
+import * as adminController from '../controllers/adminController';
+
 const router = express.Router();
-const { verifyToken, requireRole } = require('../middleware/auth');
-const adminController = require('../controllers/adminController');
 
 router.get('/users', verifyToken, requireRole('faculty', 'admin'), adminController.listUsers);
 
@@ -11,4 +12,4 @@ router.get('/departments', adminController.listDepartments);
 router.patch('/users/:id', adminController.updateUser);
 router.delete('/users/:id', adminController.removeUser);
 
-module.exports = router;
+export default router;

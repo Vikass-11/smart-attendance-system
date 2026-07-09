@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { verifyToken, requireRole } from '../middleware/auth';
+import * as reportController from '../controllers/reportController';
+
 const router = express.Router();
-const { verifyToken, requireRole } = require('../middleware/auth');
-const reportController = require('../controllers/reportController');
 
 router.use(verifyToken, requireRole('faculty', 'admin'));
 
@@ -12,4 +13,4 @@ router.get('/summary', reportController.institutionSummary);
 router.get('/export/csv', reportController.exportCSV);
 router.get('/export/pdf', reportController.exportPDF);
 
-module.exports = router;
+export default router;
