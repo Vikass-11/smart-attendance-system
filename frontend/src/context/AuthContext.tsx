@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import apiClient from '../api/axiosClient';
-import { getAccessToken, setAccessToken } from '../store/authStore';
 import { AuthContext, type AppUser } from './auth-context';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -12,15 +11,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let isMounted = true;
 
     const bootstrapAuth = async () => {
-      const token = getAccessToken();
-
-      if (!token) {
-        if (isMounted) {
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
         const res = await apiClient.get('/auth/me');
 
@@ -28,8 +18,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setAppUser(res.data.user);
         }
       } catch {
-        setAccessToken(null);
-
         if (isMounted) {
           setAppUser(null);
         }
@@ -49,12 +37,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     const res = await apiClient.post('/auth/login', { email, password });
-    setAccessToken(res.data.accessToken);
     setAppUser(res.data.user);
   };
 
   const logout = async () => {
-    setAccessToken(null);
+    try {
+      await apiClient.post('/auth/logout');
+    } catch {
+      // ignore
+    }
     setAppUser(null);
   };
 

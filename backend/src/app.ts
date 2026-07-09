@@ -1,5 +1,6 @@
 import express, { Application } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import authRoutes from './routes/authRoutes';
 import attendanceRoutes from './routes/attendanceRoutes';
 import leaveRoutes from './routes/leaveRoutes';
@@ -11,7 +12,13 @@ import setupSwagger from './swagger';
 
 const app: Application = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 app.use(express.json());
 app.use(requestLogger);
 

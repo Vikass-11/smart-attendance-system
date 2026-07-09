@@ -35,10 +35,18 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
 
     const accessToken = createAccessToken(user);
 
+    // Set HttpOnly cookie for access token (for improved security)
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     sendSuccess(res, {
       statusCode: 201,
       message: 'Registration completed successfully',
-      data: { accessToken, user },
+      data: { user },
     });
   } catch (error) {
     if (error instanceof Error && error.message === 'User already exists') {
@@ -71,9 +79,17 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
     const accessToken = createAccessToken(user);
 
+    // Set HttpOnly cookie containing the access token
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     sendSuccess(res, {
       message: 'Login successful',
-      data: { accessToken, user },
+      data: { user },
     });
   } catch {
     next(new AppError('Login failed', 500, 'LOGIN_FAILED'));
@@ -94,4 +110,13 @@ export const getMe = async (
     message: 'Authenticated user fetched successfully',
     data: req.user,
   });
+};
+
+export const logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    res.clearCookie('access_token', { httpOnly: true, sameSite: 'lax' });
+    sendSuccess(res, { message: 'Logged out successfully', data: null });
+  } catch (err) {
+    next(new AppError('Logout failed', 500, 'LOGOUT_FAILED'));
+  }
 };

@@ -3,23 +3,14 @@ import { getAccessToken, setAccessToken } from '../store/authStore';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-});
-
-apiClient.interceptors.request.use((config) => {
-  const token = getAccessToken();
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
+  withCredentials: true, // send HttpOnly cookies
 });
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      setAccessToken(null);
+      // logout will be handled by AuthProvider when receiving 401
     }
 
     return Promise.reject(error);
