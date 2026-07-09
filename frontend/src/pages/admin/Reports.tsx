@@ -15,18 +15,23 @@ const Reports = () => {
   const monthStart = today.slice(0, 8) + '01';
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
-        setDeptBreakdown(res.data.departmentBreakdown);
-      } catch (err) {
-        console.error('Failed to load reports', err);
-      } finally {
-        setLoading(false);
-      }
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
+          setDeptBreakdown(res.data.departmentBreakdown);
+        } catch (err) {
+          console.error('Failed to load reports', err);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
     };
-    loadData();
-  }, []);
+  }, [monthStart, today]);
 
   const handleExport = async (type: 'csv' | 'pdf') => {
     const res = await apiClient.get(`/reports/export/${type}?fromDate=${monthStart}&toDate=${today}`, {
