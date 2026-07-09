@@ -1,17 +1,15 @@
 import type { ReactNode } from 'react';
-import { signOut } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import { auth } from '../config/firebase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import Sidebar from './Sidebar';
 
 const Layout = ({ children }: { children: ReactNode }) => {
-  const { appUser } = useAuth();
+  const { appUser, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await signOut(auth);
+    await logout();
     navigate('/login');
   };
 
