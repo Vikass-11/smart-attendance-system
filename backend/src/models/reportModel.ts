@@ -6,7 +6,7 @@ export const getDailyReport = async (date: string): Promise<RowDataPacket[]> => 
     `SELECT u.id AS student_id, u.name, u.email, a.status
      FROM users u
      LEFT JOIN attendance a ON u.id = a.student_id AND a.date = ?
-     WHERE u.role = 'student'
+     WHERE u.role = 'student' AND u.is_active = TRUE
      ORDER BY u.name`,
     [date]
   );
@@ -23,7 +23,7 @@ export const getRangeReport = async (fromDate: string, toDate: string): Promise<
             ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / NULLIF(COUNT(a.id), 0)) * 100, 2) AS percentage
      FROM users u
      LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
-     WHERE u.role = 'student'
+     WHERE u.role = 'student' AND u.is_active = TRUE
      GROUP BY u.id
      ORDER BY u.name`,
     [fromDate, toDate]
@@ -42,7 +42,7 @@ export const getInstitutionSummary = async (fromDate: string, toDate: string): P
         ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / NULLIF(COUNT(a.id), 0)) * 100, 2) AS overall_percentage
      FROM users u
      LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
-     WHERE u.role = 'student'`,
+     WHERE u.role = 'student' AND u.is_active = TRUE`,
     [fromDate, toDate]
   );
   return rows[0];
@@ -56,7 +56,7 @@ export const getDepartmentWiseReport = async (fromDate: string, toDate: string):
      FROM users u
      LEFT JOIN departments d ON u.department_id = d.id
      LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
-     WHERE u.role = 'student'
+     WHERE u.role = 'student' AND u.is_active = TRUE
      GROUP BY d.id
      ORDER BY percentage ASC`,
     [fromDate, toDate]
