@@ -10,6 +10,7 @@ import Departments from './pages/admin/Departments';
 import UserManagement from './pages/admin/UserManagement';
 import Reports from './pages/admin/Reports';
 import { useAuth } from './hooks/useAuth';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   const { appUser, loading } = useAuth();
@@ -27,7 +28,8 @@ function App() {
   }
 
   return (
-    <Routes>
+    <ErrorBoundary>
+      <Routes>
       {appUser.role === 'student' && (
         <>
           <Route path="/dashboard" element={<StudentDashboard />} />
@@ -51,7 +53,8 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </>
       )}
-    </Routes>
+      </Routes>
+    </ErrorBoundary>
   );
 }
 

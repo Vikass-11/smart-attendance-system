@@ -16,8 +16,14 @@ export const fetchInstitutionSummary = async (
   filters: DepartmentReportFilters
 ) => {
   const summary = await reportModel.getInstitutionSummary(fromDate, toDate);
-  const departmentBreakdown = await reportModel.getDepartmentWiseReport(fromDate, toDate, filters);
-  return { summary, departmentBreakdown };
+  const departmentResult = await reportModel.getDepartmentWiseReport(fromDate, toDate, filters);
+
+  // Normalize response: return rows array and include pagination/meta separately
+  return {
+    summary,
+    departmentBreakdown: departmentResult.rows,
+    departmentBreakdownMeta: { total: departmentResult.total },
+  };
 };
 
 export const generateCSV = async (fromDate: string, toDate: string): Promise<string> => {

@@ -81,6 +81,8 @@ export const institutionSummary = async (req: AuthenticatedRequest, res: Respons
     };
 
     const result = await reportService.fetchInstitutionSummary(fromDate, toDate, filters);
+
+    // Ensure response envelope: data: { summary, departmentBreakdown, departmentBreakdownMeta }
     apiResponse.success(res, result, 'Institution summary');
   } catch (err: any) {
     apiResponse.error(res, 'Failed to generate summary', 500, err.message);
