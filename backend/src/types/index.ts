@@ -1,28 +1,23 @@
 import { Request } from 'express';
 
 export interface AppUser {
-  uid: string;
-  email: string;
   id: number;
+  name: string;
+  email: string;
   role: 'student' | 'faculty' | 'admin';
   departmentId: number | null;
 }
 
-export interface PendingUser {
-  uid: string;
-  email: string;
-}
-
 export interface AuthenticatedRequest extends Request {
   user?: AppUser;
-  user_pending?: PendingUser;
 }
 
 export interface UserRow {
   id: number;
-  firebase_uid: string;
+  firebase_uid: string | null;
   name: string;
   email: string;
+  password_hash: string;
   role: 'student' | 'faculty' | 'admin';
   department_id: number | null;
   created_at: Date;
