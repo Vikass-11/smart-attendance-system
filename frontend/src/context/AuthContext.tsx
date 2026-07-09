@@ -1,65 +1,66 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import type { User } from 'firebase/auth';
-import { auth } from '../config/firebase';
 import apiClient from '../api/axiosClient';
-
-interface AppUser {
-  id: number;
-  uid: string;
-  name: string;
-  email: string;
-  role: 'student' | 'faculty' | 'admin';
-  departmentId: number | null;
-}
-
-interface AuthContextType {
-  firebaseUser: User | null;
-  appUser: AppUser | null;
-  loading: boolean;
-  refreshAppUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { getAccessToken, setAccessToken } from '../store/authStore';
+import { AuthContext, type AppUser } from './auth-context';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchAppUser = async () => {
-    try {
-      const res = await apiClient.get('/auth/me');
-      setAppUser(res.data);
-    } catch (err) {
-      setAppUser(null);
-    }
-  };
-
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setFirebaseUser(user);
-      if (user) {
-        await fetchAppUser();
-      } else {
-        setAppUser(null);
-      }
-      setLoading(false);
-    });
+    let isMounted = true;
 
-    return () => unsubscribe();
+    const bootstrapAuth = async () => {
+      const token = getAccessToken();
+
+      if (!token) {
+        if (isMounted) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        const res = await apiClient.get('/auth/me');
+
+        if (isMounted) {
+          setAppUser(res.data.user);
+        }
+      } catch {
+        setAccessToken(null);
+
+        if (isMounted) {
+          setAppUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void bootstrapAuth();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  const login = async (email: string, password: string) => {
+    const res = await apiClient.post('/auth/login', { email, password });
+    setAccessToken(res.data.accessToken);
+    setAppUser(res.data.user);
+  };
+
+  const logout = async () => {
+    setAccessToken(null);
+    setAppUser(null);
+  };
+
   return (
-    <AuthContext.Provider value={{ firebaseUser, appUser, loading, refreshAppUser: fetchAppUser }}>
+    <AuthContext.Provider value={{ appUser, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
 };
