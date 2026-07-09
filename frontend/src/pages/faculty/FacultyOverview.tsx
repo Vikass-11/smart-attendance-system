@@ -4,6 +4,7 @@ import { CalendarCheck, ClipboardList, AlertTriangle } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import { useAuth } from '../../context/AuthContext';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 interface LowAttendanceStudent {
   id: number;
@@ -11,12 +12,9 @@ interface LowAttendanceStudent {
   percentage: number;
 }
 
-interface PendingLeave {
-  id: number;
-}
-
 const FacultyOverview = () => {
   const { appUser } = useAuth();
+  const { getCached, setCache } = useDashboardStore();
   const [lowAttendance, setLowAttendance] = useState<LowAttendanceStudent[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [studentCount, setStudentCount] = useState(0);
@@ -24,21 +22,41 @@ const FacultyOverview = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      const cacheKey = 'faculty-overview';
+      const cached = getCached(cacheKey);
+
+      if (cached) {
+        setLowAttendance(cached.lowAttendance);
+        setPendingCount(cached.pendingCount);
+        setStudentCount(cached.studentCount);
+        setLoading(false);
+        return;
+      }
+
       try {
         const [lowRes, leaveRes, studentsRes] = await Promise.all([
           apiClient.get('/attendance/low-attendance?threshold=75'),
-          apiClient.get<PendingLeave[]>('/leave/pending'),
+          apiClient.get('/leave/pending'),
           apiClient.get('/admin/users?role=student'),
         ]);
-        setLowAttendance(lowRes.data);
-        setPendingCount(leaveRes.data.length);
-        setStudentCount(studentsRes.data.length);
+
+        const result = {
+          lowAttendance: lowRes.data,
+          pendingCount: leaveRes.data.length,
+          studentCount: studentsRes.data.length,
+        };
+
+        setLowAttendance(result.lowAttendance);
+        setPendingCount(result.pendingCount);
+        setStudentCount(result.studentCount);
+        setCache(cacheKey, result);
       } catch (err) {
         console.error('Failed to load overview data', err);
       } finally {
         setLoading(false);
       }
     };
+
     loadData();
   }, []);
 
