@@ -23,7 +23,7 @@ export const getDailyReport = async (date: string): Promise<RowDataPacket[]> => 
 };
 
 export const getRangeReport = async (fromDate: string, toDate: string): Promise<RowDataPacket[]> => {
-  const [rows] = await db.query<RowDataPacket[]>(
+  const [rows] = await db.execute<RowDataPacket[]>(
     `SELECT u.id AS student_id, u.name, u.email,
             COUNT(a.id) AS total_days,
             SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_days,
@@ -41,7 +41,7 @@ export const getRangeReport = async (fromDate: string, toDate: string): Promise<
 };
 
 export const getInstitutionSummary = async (fromDate: string, toDate: string): Promise<RowDataPacket> => {
-  const [rows] = await db.query<RowDataPacket[]>(
+  const [rows] = await db.execute<RowDataPacket[]>(
     `SELECT
         COUNT(DISTINCT u.id) AS total_students,
         COUNT(a.id) AS total_records,
