@@ -16,11 +16,12 @@ const getAllDepartments = async () => {
 const getAllUsers = async (role = null) => {
     let query = `SELECT u.id, u.name, u.email, u.role, u.created_at, d.name AS department
                  FROM users u
-                 LEFT JOIN departments d ON u.department_id = d.id`;
+                 LEFT JOIN departments d ON u.department_id = d.id
+                 WHERE u.is_active = TRUE`;
     const params = [];
 
     if (role) {
-        query += ` WHERE u.role = ?`;
+        query += ` AND u.role = ?`;
         params.push(role);
     }
 
@@ -35,7 +36,7 @@ const searchUsers = async (searchTerm) => {
         `SELECT u.id, u.name, u.email, u.role, d.name AS department
          FROM users u
          LEFT JOIN departments d ON u.department_id = d.id
-         WHERE u.name LIKE ? OR u.email LIKE ?
+         WHERE u.is_active = TRUE AND (u.name LIKE ? OR u.email LIKE ?)
          ORDER BY u.name`,
         [`%${searchTerm}%`, `%${searchTerm}%`]
     );
@@ -51,7 +52,10 @@ const updateUserRole = async (userId, role, departmentId) => {
 };
 
 const deleteUser = async (userId) => {
-    const [result] = await db.query(`DELETE FROM users WHERE id = ?`, [userId]);
+    const [result] = await db.query(
+        `UPDATE users SET is_active = FALSE WHERE id = ?`,
+        [userId]
+    );
     return result;
 };
 
