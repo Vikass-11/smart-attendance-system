@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentDashboard from './pages/student/StudentDashboard';
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import { useAuth } from './context/AuthContext';
 
 function App() {
@@ -14,7 +15,8 @@ function App() {
     if (!firebaseUser) return <Navigate to="/login" />;
     if (appUser?.role === 'student') return <StudentDashboard />;
     if (appUser?.role === 'faculty') return <FacultyDashboard />;
-    return <div className="p-8">Dashboard for {appUser?.role} coming next</div>;
+    if (appUser?.role === 'admin') return <AdminDashboard />;
+    return <div className="p-8">Unknown role</div>;
   };
 
   return (
