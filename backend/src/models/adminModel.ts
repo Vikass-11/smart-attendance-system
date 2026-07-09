@@ -1,44 +1,103 @@
 import db from '../config/db';
 import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
+export interface UserFilters {
+  role?: string | null;
+  search?: string;
+  page: number;
+  limit: number;
+  offset: number;
+  sortBy: 'name' | 'email' | 'role' | 'createdAt';
+  sortOrder: 'asc' | 'desc';
+}
+
+export interface DepartmentFilters {
+  search?: string;
+  page: number;
+  limit: number;
+  offset: number;
+  sortBy: 'name' | 'createdAt';
+  sortOrder: 'asc' | 'desc';
+}
+
 export const createDepartment = async (name: string): Promise<ResultSetHeader> => {
   const [result] = await db.query<ResultSetHeader>(`INSERT INTO departments (name) VALUES (?)`, [name]);
   return result;
 };
 
-export const getAllDepartments = async (): Promise<RowDataPacket[]> => {
-  const [rows] = await db.query<RowDataPacket[]>(`SELECT * FROM departments ORDER BY name`);
-  return rows;
-};
+export const getAllDepartments = async (
+  filters: DepartmentFilters
+): Promise<{ rows: RowDataPacket[]; total: number }> => {
+  const sortColumnMap: Record<DepartmentFilters['sortBy'], string> = {
+    name: 'name',
+    createdAt: 'created_at',
+  };
 
-export const getAllUsers = async (role: string | null = null): Promise<RowDataPacket[]> => {
-  let query = `SELECT u.id, u.name, u.email, u.role, u.created_at, d.name AS department
-               FROM users u
-               LEFT JOIN departments d ON u.department_id = d.id
-               WHERE u.is_active = TRUE`;
-  const params: string[] = [];
+  let whereClause = '';
+  const params: Array<string | number> = [];
 
-  if (role) {
-    query += ` AND u.role = ?`;
-    params.push(role);
+  if (filters.search) {
+    whereClause = 'WHERE name LIKE ?';
+    params.push(`%${filters.search}%`);
   }
 
-  query += ` ORDER BY u.name`;
+  const [countRows] = await db.query<RowDataPacket[]>(
+    `SELECT COUNT(*) AS total FROM departments ${whereClause}`,
+    params
+  );
 
-  const [rows] = await db.query<RowDataPacket[]>(query, params);
-  return rows;
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT * FROM departments
+     ${whereClause}
+     ORDER BY ${sortColumnMap[filters.sortBy]} ${filters.sortOrder.toUpperCase()}
+     LIMIT ? OFFSET ?`,
+    [...params, filters.limit, filters.offset]
+  );
+
+  return { rows, total: Number(countRows[0].total) };
 };
 
-export const searchUsers = async (searchTerm: string): Promise<RowDataPacket[]> => {
+export const getAllUsers = async (
+  filters: UserFilters
+): Promise<{ rows: RowDataPacket[]; total: number }> => {
+  const sortColumnMap: Record<UserFilters['sortBy'], string> = {
+    name: 'u.name',
+    email: 'u.email',
+    role: 'u.role',
+    createdAt: 'u.created_at',
+  };
+
+  let whereClause = 'WHERE u.is_active = TRUE';
+  const params: Array<string | number> = [];
+
+  if (filters.role) {
+    whereClause += ' AND u.role = ?';
+    params.push(filters.role);
+  }
+
+  if (filters.search) {
+    whereClause += ' AND (u.name LIKE ? OR u.email LIKE ?)';
+    params.push(`%${filters.search}%`, `%${filters.search}%`);
+  }
+
+  const [countRows] = await db.query<RowDataPacket[]>(
+    `SELECT COUNT(*) AS total
+     FROM users u
+     ${whereClause}`,
+    params
+  );
+
   const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT u.id, u.name, u.email, u.role, d.name AS department
+    `SELECT u.id, u.name, u.email, u.role, u.created_at, d.name AS department
      FROM users u
      LEFT JOIN departments d ON u.department_id = d.id
-     WHERE u.is_active = TRUE AND (u.name LIKE ? OR u.email LIKE ?)
-     ORDER BY u.name`,
-    [`%${searchTerm}%`, `%${searchTerm}%`]
+     ${whereClause}
+     ORDER BY ${sortColumnMap[filters.sortBy]} ${filters.sortOrder.toUpperCase()}
+     LIMIT ? OFFSET ?`,
+    [...params, filters.limit, filters.offset]
   );
-  return rows;
+
+  return { rows, total: Number(countRows[0].total) };
 };
 
 export const updateUserRole = async (

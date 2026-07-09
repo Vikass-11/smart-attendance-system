@@ -1,9 +1,11 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import * as authService from '../services/authService';
 import { createAccessToken } from '../services/tokenService';
 import { AuthenticatedRequest } from '../types';
+import { AppError } from '../middleware/errorHandler';
+import { sendSuccess } from '../utils/apiResponse';
 
-export const registerUser = async (req: Request, res: Response): Promise<void> => {
+export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { name, email, password, role, departmentId } = req.body as {
     name?: string;
     email?: string;
@@ -13,12 +15,12 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
   };
 
   if (!name || !email || !password || !role) {
-    res.status(400).json({ error: 'Name, email, password, and role are required' });
+    next(new AppError('Name, email, password, and role are required', 400, 'VALIDATION_ERROR'));
     return;
   }
 
   if (!authService.isValidRole(role)) {
-    res.status(400).json({ error: 'Invalid role' });
+    next(new AppError('Invalid role', 400, 'VALIDATION_ERROR'));
     return;
   }
 
@@ -33,25 +35,29 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     const accessToken = createAccessToken(user);
 
-    res.status(201).json({ accessToken, user });
+    sendSuccess(res, {
+      statusCode: 201,
+      message: 'Registration completed successfully',
+      data: { accessToken, user },
+    });
   } catch (error) {
     if (error instanceof Error && error.message === 'User already exists') {
-      res.status(409).json({ error: error.message });
+      next(new AppError(error.message, 409, 'DUPLICATE_RESOURCE'));
       return;
     }
 
-    res.status(500).json({ error: 'Registration failed' });
+    next(new AppError('Registration failed', 500, 'REGISTRATION_FAILED'));
   }
 };
 
-export const loginUser = async (req: Request, res: Response): Promise<void> => {
+export const loginUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { email, password } = req.body as {
     email?: string;
     password?: string;
   };
 
   if (!email || !password) {
-    res.status(400).json({ error: 'Email and password are required' });
+    next(new AppError('Email and password are required', 400, 'VALIDATION_ERROR'));
     return;
   }
 
@@ -59,26 +65,33 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const user = await authService.loginUser(email, password);
 
     if (!user) {
-      res.status(401).json({ error: 'Invalid email or password' });
+      next(new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS'));
       return;
     }
 
     const accessToken = createAccessToken(user);
 
-    res.status(200).json({ accessToken, user });
+    sendSuccess(res, {
+      message: 'Login successful',
+      data: { accessToken, user },
+    });
   } catch {
-    res.status(500).json({ error: 'Login failed' });
+    next(new AppError('Login failed', 500, 'LOGIN_FAILED'));
   }
 };
 
 export const getMe = async (
   req: AuthenticatedRequest,
-  res: Response
+  res: Response,
+  next: NextFunction
 ): Promise<void> => {
   if (!req.user) {
-    res.status(401).json({ error: 'Unauthorized' });
+    next(new AppError('Unauthorized', 401, 'UNAUTHORIZED'));
     return;
   }
 
-  res.status(200).json({ user: req.user });
+  sendSuccess(res, {
+    message: 'Authenticated user fetched successfully',
+    data: req.user,
+  });
 };

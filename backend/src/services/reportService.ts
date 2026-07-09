@@ -1,5 +1,6 @@
 import * as reportModel from '../models/reportModel';
 import { Parser } from 'json2csv';
+import type { DepartmentReportFilters } from '../models/reportModel';
 
 export const fetchDailyReport = async (date: string) => {
   return reportModel.getDailyReport(date);
@@ -9,9 +10,13 @@ export const fetchRangeReport = async (fromDate: string, toDate: string) => {
   return reportModel.getRangeReport(fromDate, toDate);
 };
 
-export const fetchInstitutionSummary = async (fromDate: string, toDate: string) => {
+export const fetchInstitutionSummary = async (
+  fromDate: string,
+  toDate: string,
+  filters: DepartmentReportFilters
+) => {
   const summary = await reportModel.getInstitutionSummary(fromDate, toDate);
-  const departmentBreakdown = await reportModel.getDepartmentWiseReport(fromDate, toDate);
+  const departmentBreakdown = await reportModel.getDepartmentWiseReport(fromDate, toDate, filters);
   return { summary, departmentBreakdown };
 };
 

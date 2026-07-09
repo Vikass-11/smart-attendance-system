@@ -1,72 +1,115 @@
-import { Response } from 'express';
+import { NextFunction, Response } from 'express';
 import * as adminService from '../services/adminService';
 import { AuthenticatedRequest } from '../types';
+import { AppError } from '../middleware/errorHandler';
+import { createPaginationMeta, sendPaginated, sendSuccess } from '../utils/apiResponse';
+import { parsePaginationOptions, parseSortBy, parseSortOrder } from '../utils/pagination';
 
-export const addDepartment = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const addDepartment = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   const { name } = req.body;
 
   if (!name) {
-    res.status(400).json({ error: 'name is required' });
+    next(new AppError('name is required', 400, 'VALIDATION_ERROR'));
     return;
   }
 
   try {
     const result = await adminService.createNewDepartment(name);
-    res.status(201).json({ id: result.insertId, name });
-  } catch (err: any) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({ error: 'Department already exists' });
+    sendSuccess(res, {
+      statusCode: 201,
+      message: 'Department created successfully',
+      data: { id: result.insertId, name },
+    });
+  } catch (error) {
+    if (typeof error === 'object' && error && 'code' in error && error.code === 'ER_DUP_ENTRY') {
+      next(new AppError('Department already exists', 409, 'DUPLICATE_RESOURCE'));
       return;
     }
-    res.status(500).json({ error: 'Failed to create department', details: err.message });
+    next(new AppError('Failed to create department', 500, 'DEPARTMENT_CREATE_FAILED'));
   }
 };
 
-export const listDepartments = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const listDepartments = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const departments = await adminService.fetchDepartments();
-    res.json(departments);
-  } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch departments', details: err.message });
+    const pagination = parsePaginationOptions(req.query as Record<string, unknown>);
+    const sortBy = parseSortBy(req.query.sortBy, ['name', 'createdAt'] as const, 'name');
+    const sortOrder = parseSortOrder(req.query.sortOrder);
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : undefined;
+
+    const result = await adminService.fetchDepartments({
+      ...pagination,
+      sortBy,
+      sortOrder,
+      search,
+    });
+
+    sendPaginated(res, {
+      data: result.rows,
+      pagination: createPaginationMeta(pagination.page, pagination.limit, result.total),
+      message: 'Departments fetched successfully',
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const listUsers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const listUsers = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   const role = req.query.role as string | undefined;
   const search = req.query.search as string | undefined;
 
   try {
-    const users = await adminService.fetchUsers(role, search);
-    res.json(users);
-  } catch (err: any) {
-    res.status(500).json({ error: 'Failed to fetch users', details: err.message });
+    const pagination = parsePaginationOptions(req.query as Record<string, unknown>);
+    const sortBy = parseSortBy(req.query.sortBy, ['name', 'email', 'role', 'createdAt'] as const, 'name');
+    const sortOrder = parseSortOrder(req.query.sortOrder);
+
+    const result = await adminService.fetchUsers({
+      ...pagination,
+      role,
+      search: search?.trim() || undefined,
+      sortBy,
+      sortOrder,
+    });
+
+    sendPaginated(res, {
+      data: result.rows,
+      pagination: createPaginationMeta(pagination.page, pagination.limit, result.total),
+      message: 'Users fetched successfully',
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
-export const updateUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const updateUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   const { id } = req.params;
   const { role, departmentId } = req.body;
 
   if (!adminService.isValidRole(role)) {
-    res.status(400).json({ error: 'Invalid role' });
+    next(new AppError('Invalid role', 400, 'VALIDATION_ERROR'));
     return;
   }
 
   try {
     await adminService.changeUserRole(Number(id), role, departmentId || null);
-    res.json({ message: 'User updated successfully' });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Failed to update user', details: err.message });
+    sendSuccess(res, {
+      message: 'User updated successfully',
+      data: { id: Number(id), role, departmentId: departmentId || null },
+    });
+  } catch (error) {
+    next(new AppError('Failed to update user', 500, 'USER_UPDATE_FAILED'));
   }
 };
 
-export const removeUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const removeUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   const { id } = req.params;
 
   try {
     await adminService.deactivateUser(Number(id));
-    res.json({ message: 'User deleted successfully' });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Failed to delete user', details: err.message });
+    sendSuccess(res, {
+      message: 'User deleted successfully',
+      data: { id: Number(id) },
+    });
+  } catch (error) {
+    next(new AppError('Failed to delete user', 500, 'USER_DELETE_FAILED'));
   }
 };

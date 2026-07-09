@@ -1,4 +1,5 @@
 import * as adminModel from '../models/adminModel';
+import type { DepartmentFilters, UserFilters } from '../models/adminModel';
 
 export const isValidRole = (role: string): boolean => ['student', 'faculty', 'admin'].includes(role);
 
@@ -6,13 +7,12 @@ export const createNewDepartment = async (name: string) => {
   return adminModel.createDepartment(name);
 };
 
-export const fetchDepartments = async () => {
-  return adminModel.getAllDepartments();
+export const fetchDepartments = async (filters: DepartmentFilters) => {
+  return adminModel.getAllDepartments(filters);
 };
 
-export const fetchUsers = async (role?: string, search?: string) => {
-  if (search) return adminModel.searchUsers(search);
-  return adminModel.getAllUsers(role || null);
+export const fetchUsers = async (filters: UserFilters) => {
+  return adminModel.getAllUsers(filters);
 };
 
 export const changeUserRole = async (userId: number, role: string, departmentId: number | null) => {
