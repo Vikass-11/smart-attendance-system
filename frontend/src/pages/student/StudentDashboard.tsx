@@ -6,6 +6,7 @@ import Layout from '../../components/Layout';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { leaveSchema } from '../../schemas/leaveSchema';
 import type { LeaveFormData } from '../../schemas/leaveSchema';
+import type { AxiosError } from 'axios';
 
 interface AttendanceRecord {
   id: number;
@@ -20,6 +21,12 @@ interface LeaveRequest {
   to_date: string;
   status: string;
   created_at: string;
+}
+
+interface StudentDashboardCache {
+  percentage: { totalDays: number; presentDays: number; percentage: number } | null;
+  history: AttendanceRecord[];
+  leaveRequests: LeaveRequest[];
 }
 
 const StudentDashboard = () => {
@@ -42,11 +49,55 @@ const StudentDashboard = () => {
 
   const cacheKey = 'student-dashboard';
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        setLoading(true);
+
+        const cached = getCached<StudentDashboardCache>(cacheKey);
+        if (cached) {
+          setPercentage(cached.percentage);
+          setHistory(cached.history);
+          setLeaveRequests(cached.leaveRequests);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const [pctRes, historyRes, leaveRes] = await Promise.all([
+            apiClient.get('/attendance/my-percentage'),
+            apiClient.get('/attendance/my-history'),
+            apiClient.get('/leave/my-requests'),
+          ]);
+
+          const result = {
+            percentage: pctRes.data,
+            history: historyRes.data,
+            leaveRequests: leaveRes.data,
+          };
+
+          setPercentage(result.percentage);
+          setHistory(result.history);
+          setLeaveRequests(result.leaveRequests);
+          setCache(cacheKey, result);
+        } catch (err) {
+          console.error('Failed to load dashboard data', err);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [cacheKey, getCached, setCache]);
+
   const loadData = async (skipCache = false) => {
     setLoading(true);
 
     if (!skipCache) {
-      const cached = getCached(cacheKey);
+      const cached = getCached<StudentDashboardCache>(cacheKey);
       if (cached) {
         setPercentage(cached.percentage);
         setHistory(cached.history);
@@ -80,10 +131,6 @@ const StudentDashboard = () => {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
   const onSubmitLeave = async (data: LeaveFormData) => {
     setSubmitError('');
     setSubmitting(true);
@@ -93,8 +140,9 @@ const StudentDashboard = () => {
       reset();
       invalidate(cacheKey);
       await loadData(true);
-    } catch (err: any) {
-      setSubmitError(err.response?.data?.error || 'Failed to submit leave request');
+    } catch (error) {
+      const err = error as AxiosError<{ error?: string }>;
+      setSubmitError(err.response?.data?.error ?? 'Failed to submit leave request');
     } finally {
       setSubmitting(false);
     }
