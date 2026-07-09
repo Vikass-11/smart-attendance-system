@@ -1,30 +1,36 @@
 import { useState } from 'react';
-import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, User, Users } from 'lucide-react';
-import { auth } from '../config/firebase';
+import type { AxiosError } from 'axios';
 import apiClient from '../api/axiosClient';
+import { registerSchema } from '../schemas/authSchemas';
+import type { RegisterFormData } from '../schemas/authSchemas';
 
 const Register = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('student');
-  const [error, setError] = useState('');
+  const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { role: 'student' },
+  });
+
+  const onSubmit = async (data: RegisterFormData) => {
+    setApiError('');
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      await apiClient.post('/auth/register', { name, role });
-      await signOut(auth);
+      await apiClient.post('/auth/register', data);
       navigate('/login?registered=true');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+    } catch (error) {
+      const err = error as AxiosError<{ error?: string }>;
+      setApiError(err.response?.data?.error ?? 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -43,26 +49,25 @@ const Register = () => {
         <h2 className="text-2xl font-bold text-white mb-1 text-center">Create your account</h2>
         <p className="text-slate-400 text-sm mb-6 text-center">Get started in a few seconds</p>
 
-        {error && (
+        {apiError && (
           <div className="text-red-300 text-sm mb-4 bg-red-500/10 border border-red-400/20 rounded-lg p-3">
-            {error}
+            {apiError}
           </div>
         )}
 
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name</label>
             <div className="relative">
               <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                {...register('name')}
                 className="w-full bg-white/5 border border-white/15 text-white placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 placeholder="Vikas Kumar"
-                required
               />
             </div>
+            {errors.name && <p className="text-red-300 text-xs mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
@@ -71,13 +76,12 @@ const Register = () => {
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 className="w-full bg-white/5 border border-white/15 text-white placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 placeholder="you@institution.edu"
-                required
               />
             </div>
+            {errors.email && <p className="text-red-300 text-xs mt-1">{errors.email.message}</p>}
           </div>
 
           <div>
@@ -86,13 +90,12 @@ const Register = () => {
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...register('password')}
                 className="w-full bg-white/5 border border-white/15 text-white placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
                 placeholder="At least 6 characters"
-                required
               />
             </div>
+            {errors.password && <p className="text-red-300 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
           <div>
@@ -100,8 +103,7 @@ const Register = () => {
             <div className="relative">
               <Users className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
               <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
+                {...register('role')}
                 className="w-full bg-white/5 border border-white/15 text-white rounded-lg pl-10 pr-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
               >
                 <option value="student" className="bg-slate-800">Student</option>
@@ -109,6 +111,7 @@ const Register = () => {
                 <option value="admin" className="bg-slate-800">Admin</option>
               </select>
             </div>
+            {errors.role && <p className="text-red-300 text-xs mt-1">{errors.role.message}</p>}
           </div>
 
           <button
