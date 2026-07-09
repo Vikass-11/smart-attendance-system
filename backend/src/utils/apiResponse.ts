@@ -1,5 +1,18 @@
 import { Response } from 'express';
 
+export const success = (res: Response, data: any, message = 'OK', status = 200) => {
+  return res.status(status).json({ success: true, message, data });
+};
+
+export const error = (res: Response, message = 'Internal Server Error', status = 500, details?: any) => {
+  const payload: any = { success: false, message };
+  if (details) payload.details = details;
+  return res.status(status).json(payload);
+};
+
+export default { success, error };
+import { Response } from 'express';
+
 export interface PaginationMeta {
   page: number;
   limit: number;

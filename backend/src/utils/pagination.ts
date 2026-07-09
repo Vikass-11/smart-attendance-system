@@ -1,3 +1,22 @@
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export const getPagination = (page = 1, limit = 10) => {
+  const p = Math.max(1, Number(page || 1));
+  const l = Math.max(1, Number(limit || 10));
+  const offset = (p - 1) * l;
+  return { page: p, limit: l, offset };
+};
+
+export const getPagingData = (totalItems: number, page: number, limit: number) => {
+  const currentPage = page;
+  const totalPages = Math.ceil(totalItems / limit);
+  return { totalItems, totalPages, currentPage };
+};
+
+export default { getPagination, getPagingData };
 import { AppError } from '../middleware/errorHandler';
 
 export interface PaginationOptions {
