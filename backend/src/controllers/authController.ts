@@ -1,20 +1,19 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import * as authService from '../services/authService';
+import { createAccessToken } from '../services/tokenService';
 import { AuthenticatedRequest } from '../types';
 
-export const registerUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { name, role, departmentId } = req.body;
-  const pending = req.user_pending;
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
+  const { name, email, password, role, departmentId } = req.body as {
+    name?: string;
+    email?: string;
+    password?: string;
+    role?: string;
+    departmentId?: number | null;
+  };
 
-  if (!pending) {
-    res.status(401).json({ error: 'No pending user context' });
-    return;
-  }
-
-  const { uid, email } = pending;
-
-  if (!name || !role) {
-    res.status(400).json({ error: 'Name and role are required' });
+  if (!name || !email || !password || !role) {
+    res.status(400).json({ error: 'Name, email, password, and role are required' });
     return;
   }
 
@@ -24,20 +23,62 @@ export const registerUser = async (req: AuthenticatedRequest, res: Response): Pr
   }
 
   try {
-    const alreadyRegistered = await authService.isUserRegistered(uid);
-    if (alreadyRegistered) {
-      res.status(409).json({ error: 'User already registered' });
+    const user = await authService.registerUser(
+      name,
+      email,
+      password,
+      role,
+      departmentId ?? null
+    );
+
+    const accessToken = createAccessToken(user);
+
+    res.status(201).json({ accessToken, user });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'User already exists') {
+      res.status(409).json({ error: error.message });
       return;
     }
 
-    const id = await authService.createUser(uid, name, email, role, departmentId || null);
-
-    res.status(201).json({ id, uid, name, email, role, departmentId: departmentId || null });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Registration failed', details: err.message });
+    res.status(500).json({ error: 'Registration failed' });
   }
 };
 
-export const getMe = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  res.json(req.user);
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body as {
+    email?: string;
+    password?: string;
+  };
+
+  if (!email || !password) {
+    res.status(400).json({ error: 'Email and password are required' });
+    return;
+  }
+
+  try {
+    const user = await authService.loginUser(email, password);
+
+    if (!user) {
+      res.status(401).json({ error: 'Invalid email or password' });
+      return;
+    }
+
+    const accessToken = createAccessToken(user);
+
+    res.status(200).json({ accessToken, user });
+  } catch {
+    res.status(500).json({ error: 'Login failed' });
+  }
+};
+
+export const getMe = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  res.status(200).json({ user: req.user });
 };
