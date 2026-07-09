@@ -24,11 +24,11 @@ const Sidebar = () => {
 ];
 
   const adminLinks = [
-    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { to: '/dashboard', label: 'Departments', icon: Building2 },
-    { to: '/dashboard', label: 'Users', icon: Users },
-    { to: '/dashboard', label: 'Reports', icon: FileText },
-  ];
+  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard/departments', label: 'Departments', icon: Building2 },
+  { to: '/dashboard/users', label: 'Users', icon: Users },
+  { to: '/dashboard/reports', label: 'Reports', icon: FileText },
+];
 
   const links =
     appUser?.role === 'admin' ? adminLinks : appUser?.role === 'faculty' ? facultyLinks : studentLinks;
