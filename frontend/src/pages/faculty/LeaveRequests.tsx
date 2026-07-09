@@ -29,7 +29,13 @@ const LeaveRequests = () => {
   };
 
   useEffect(() => {
-    loadData();
+    const timeoutId = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleReview = async (id: number, decision: 'approved' | 'rejected') => {
