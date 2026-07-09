@@ -44,6 +44,33 @@ const AdminDashboard = () => {
   const today = new Date().toISOString().split('T')[0];
   const monthStart = today.slice(0, 8) + '01';
 
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        setLoading(true);
+        try {
+          const [usersRes, deptRes, summaryRes] = await Promise.all([
+            apiClient.get('/admin/users'),
+            apiClient.get('/admin/departments'),
+            apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`),
+          ]);
+          setUsers(usersRes.data);
+          setDepartments(deptRes.data);
+          setSummary(summaryRes.data.summary);
+          setDeptBreakdown(summaryRes.data.departmentBreakdown);
+        } catch (err) {
+          console.error('Failed to load admin dashboard data', err);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [monthStart, today]);
+
   const loadData = async () => {
     setLoading(true);
     try {
@@ -62,10 +89,6 @@ const AdminDashboard = () => {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const handleAddDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
