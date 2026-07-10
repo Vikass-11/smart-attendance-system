@@ -9,6 +9,8 @@ import reportRoutes from './routes/reportRoutes';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import setupSwagger from './swagger';
+import agentRoutes from './routes/agentRoutes';
+
 
 const app: Application = express();
 
@@ -21,6 +23,7 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(requestLogger);
+app.use('/api/agent', agentRoutes);
 
 // OpenAPI docs
 setupSwagger(app);
