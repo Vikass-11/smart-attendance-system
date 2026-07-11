@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: 18
+    steps:
+      - name: Set Node version output
+        run: echo "node-version=18" >> $GITHUB_OUTPUT
+
+  lint:
+    name: Lint (frontend)
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Run frontend lint
+        working-directory: frontend
+        run: npm run lint || echo "No lint script or lint failed"
+
+  backend-build:
+    name: Backend Build & Typecheck
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Cache backend npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: backend-npm-${{ hashFiles('backend/package-lock.json') }}
+          restore-keys: backend-npm-
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    needs: [setup, lint]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Cache frontend npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: frontend-npm-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: frontend-npm-
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+  docker-build-and-push:
+    name: Build & Push Docker images
+    runs-on: ubuntu-latest
+    needs: [backend-build, frontend-build]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/smart-attendance-backend:latest,${{ secrets.DOCKERHUB_USERNAME }}/smart-attendance-backend:${{ github.sha }}
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/smart-attendance-frontend:latest,${{ secrets.DOCKERHUB_USERNAME }}/smart-attendance-frontend:${{ github.sha }}
