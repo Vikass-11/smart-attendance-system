@@ -96,3 +96,21 @@ export const getStudentsBelowThreshold = async (threshold: number = 75): Promise
   );
   return rows;
 };
+
+export const getStudentsAboveThreshold = async (threshold: number = 75): Promise<RowDataPacket[]> => {
+  const [rows] = await db.query<RowDataPacket[]>(
+    `SELECT
+        u.id, u.name, u.email,
+        COUNT(a.id) AS total_days,
+        SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_days,
+        ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 2) AS percentage
+     FROM users u
+     JOIN attendance a ON u.id = a.student_id
+     WHERE u.role = 'student'
+     GROUP BY u.id
+     HAVING percentage >= ?
+     ORDER BY percentage DESC`,
+    [threshold]
+  );
+  return rows;
+};
