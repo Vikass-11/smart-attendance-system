@@ -36,3 +36,7 @@ export const computeAttendancePercentage = async (studentId: number) => {
 export const fetchLowAttendanceStudents = async (threshold: number) => {
   return attendanceModel.getStudentsBelowThreshold(threshold);
 };
+
+export const fetchAboveThresholdStudents = async (threshold: number) => {
+  return attendanceModel.getStudentsAboveThreshold(threshold);
+};
