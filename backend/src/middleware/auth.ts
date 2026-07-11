@@ -9,13 +9,20 @@ export const verifyToken = (
   next: NextFunction
 ): void => {
   const authHeader = req.headers.authorization;
+  const cookieToken = (req as any).cookies?.access_token as string | undefined;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  let token: string | undefined;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (cookieToken) {
+    token = cookieToken;
+  }
+
+  if (!token) {
     next(new AppError('No token provided', 401, 'UNAUTHORIZED'));
     return;
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = verifyAccessToken(token);
