@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Sidebar from './Sidebar';
+import AgentChat from './AgentChat';
 
 const Layout = ({ children }: { children: ReactNode }) => {
   const { appUser, logout } = useAuth();
@@ -34,6 +35,8 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
         <main className="flex-1 p-8 max-w-6xl w-full mx-auto">{children}</main>
       </div>
+
+      <AgentChat />
     </div>
   );
 };
