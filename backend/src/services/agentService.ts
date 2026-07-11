@@ -136,7 +136,12 @@ export const chat = async (
       };
     }
 
-    const result = await executeTool(toolName, input, user);
+    let result: any;
+    try {
+      result = await executeTool(toolName, input, user);
+    } catch (err: any) {
+      result = { error: err.message };
+    }
 
     conversation.messages.push({
       role: 'tool',
@@ -178,10 +183,14 @@ export const confirmPendingAction = async (
     return { reply: 'Okay, action cancelled.' };
   }
 
-  const result = await executeTool(toolName, input, user);
+  let result: any;
+  try {
+    result = await executeTool(toolName, input, user);
+  } catch (err: any) {
+    result = { error: err.message };
+  }
 
   conversation.messages.push({ role: 'tool', tool_call_id: toolCallId, content: JSON.stringify(result) });
-
   const tools = toOpenAITools(user.role);
 
   const followUp = await client.chat.completions.create({
