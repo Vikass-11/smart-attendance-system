@@ -11,6 +11,9 @@ import UserManagement from './pages/admin/UserManagement';
 import Reports from './pages/admin/Reports';
 import { useAuth } from './hooks/useAuth';
 import ErrorBoundary from './components/ErrorBoundary';
+import CourseManagement from './pages/admin/CourseManagement';
+import TimetableManagement from './pages/admin/TimetableManagement';
+import MyTimetable from './pages/MyTimetable';
 
 function App() {
   const { appUser, loading } = useAuth();
@@ -30,29 +33,35 @@ function App() {
   return (
     <ErrorBoundary>
       <Routes>
-      {appUser.role === 'student' && (
-        <>
-          <Route path="/dashboard" element={<StudentDashboard />} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
-        </>
-      )}
-      {appUser.role === 'faculty' && (
-        <>
-          <Route path="/dashboard" element={<FacultyOverview />} />
-          <Route path="/dashboard/attendance" element={<MarkAttendance />} />
-          <Route path="/dashboard/leave" element={<LeaveRequests />} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
-        </>
-      )}
-      {appUser.role === 'admin' && (
-        <>
-          <Route path="/dashboard" element={<AdminOverview />} />
-          <Route path="/dashboard/departments" element={<Departments />} />
-          <Route path="/dashboard/users" element={<UserManagement />} />
-          <Route path="/dashboard/reports" element={<Reports />} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
-        </>
-      )}
+        {appUser.role === 'student' && (
+          <>
+            <Route path="/dashboard" element={<StudentDashboard />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard/timetable" element={<MyTimetable />} />
+
+          </>
+        )}
+        {appUser.role === 'faculty' && (
+          <>
+            <Route path="/dashboard" element={<FacultyOverview />} />
+            <Route path="/dashboard/attendance" element={<MarkAttendance />} />
+            <Route path="/dashboard/leave" element={<LeaveRequests />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard/timetable" element={<MyTimetable />} />
+
+          </>
+        )}
+        {appUser.role === 'admin' && (
+          <>
+            <Route path="/dashboard" element={<AdminOverview />} />
+            <Route path="/dashboard/departments" element={<Departments />} />
+            <Route path="/dashboard/users" element={<UserManagement />} />
+            <Route path="/dashboard/reports" element={<Reports />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard/courses" element={<CourseManagement />} />
+            <Route path="/dashboard/timetable" element={<TimetableManagement />} />
+          </>
+        )}
       </Routes>
     </ErrorBoundary>
   );
