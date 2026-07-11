@@ -7,6 +7,8 @@ import {
   Building2,
   GraduationCap,
   ClipboardList,
+  Calendar,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 const Sidebar = () => {
@@ -14,20 +16,24 @@ const Sidebar = () => {
 
   const studentLinks = [
     { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar },
   ];
 
   const facultyLinks = [
-  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { to: '/dashboard/attendance', label: 'Mark Attendance', icon: CalendarCheck },
-  { to: '/dashboard/leave', label: 'Leave Requests', icon: ClipboardList },
-];
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { to: '/dashboard/attendance', label: 'Mark Attendance', icon: CalendarCheck },
+    { to: '/dashboard/leave', label: 'Leave Requests', icon: ClipboardList },
+    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar },
+  ];
 
   const adminLinks = [
-  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { to: '/dashboard/departments', label: 'Departments', icon: Building2 },
-  { to: '/dashboard/users', label: 'Users', icon: Users },
-  { to: '/dashboard/reports', label: 'Reports', icon: FileText },
-];
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { to: '/dashboard/departments', label: 'Departments', icon: Building2 },
+    { to: '/dashboard/users', label: 'Users', icon: Users },
+    { to: '/dashboard/reports', label: 'Reports', icon: FileText },
+    { to: '/dashboard/courses', label: 'Courses', icon: BookOpen },
+    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar },
+  ];
 
   const links =
     appUser?.role === 'admin' ? adminLinks : appUser?.role === 'faculty' ? facultyLinks : studentLinks;
