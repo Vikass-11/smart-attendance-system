@@ -21,7 +21,7 @@ export interface ToolDefinition {
 export const TOOLS: ToolDefinition[] = [
     {
         name: 'get_attendance',
-        description: 'Get attendance records. Provide studentId for one student, a single date for a daily view, or fromDate+toDate for a range report.',
+        description: 'Get attendance records. Provide studentId for one student, a single date for a daily view, or fromDate+toDate for a range report. If the user asks about attendance percentages or thresholds without specifying dates, use the last 30 days as a sensible default range rather than asking for clarification.',
         input_schema: {
             type: 'object',
             properties: {
