@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1783731048443,
+      "tag": "0000_productive_human_robot",
+      "breakpoints": true
+    }
+  ]
+}
