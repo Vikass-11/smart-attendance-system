@@ -7,6 +7,7 @@ export const courseSchema = z.object({
   credits: z.coerce.number().min(1).max(10).default(3),
 });
 
+export type CourseFormInput = z.input<typeof courseSchema>;
 export type CourseFormData = z.infer<typeof courseSchema>;
 
 export const timetableSlotSchema = z
@@ -22,4 +23,5 @@ export const timetableSlotSchema = z
     path: ['endTime'],
   });
 
+export type TimetableSlotFormInput = z.input<typeof timetableSlotSchema>;
 export type TimetableSlotFormData = z.infer<typeof timetableSlotSchema>;
