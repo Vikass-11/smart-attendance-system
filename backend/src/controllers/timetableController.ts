@@ -14,7 +14,7 @@ export const createSlot = async (req: AuthenticatedRequest, res: Response): Prom
     const id = await timetableService.createSlot({ courseId, dayOfWeek, startTime, endTime, room });
     res.status(201).json({ id, courseId, dayOfWeek, startTime, endTime, room });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    res.status(409).json({ error: err.message });
   }
 };
 
