@@ -6,8 +6,13 @@ import { randomUUID } from 'crypto';
 export const chatWithAgent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { message, conversationId } = req.body;
 
-  if (!message) {
-    res.status(400).json({ error: 'message is required' });
+  if (!message || typeof message !== 'string') {
+    res.status(400).json({ error: 'message is required and must be a string' });
+    return;
+  }
+
+  if (conversationId != null && typeof conversationId !== 'string') {
+    res.status(400).json({ error: 'conversationId must be a string' });
     return;
   }
 
