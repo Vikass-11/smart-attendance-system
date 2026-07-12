@@ -1,4 +1,4 @@
-import { mysqlTable, int, varchar, timestamp, mysqlEnum, time, unique } from 'drizzle-orm/mysql-core';
+import { mysqlTable, int, varchar, timestamp, mysqlEnum, time, unique, date } from 'drizzle-orm/mysql-core';
 
 export const courses = mysqlTable('courses', {
   id: int('id').autoincrement().primaryKey(),
@@ -7,6 +7,9 @@ export const courses = mysqlTable('courses', {
   departmentId: int('department_id').notNull(),
   credits: int('credits').default(3),
   facultyId: int('faculty_id'),
+  maxStudents: int('max_students'),
+  semesterStart: date('semester_start'),
+  semesterEnd: date('semester_end'),
   createdAt: timestamp('created_at').defaultNow(),
 });
 
