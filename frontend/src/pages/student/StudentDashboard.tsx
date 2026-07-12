@@ -142,7 +142,7 @@ const StudentDashboard = () => {
       await loadData(true);
     } catch (error) {
       const err = error as AxiosError<{ error?: string }>;
-      setSubmitError(err.response?.data?.error ?? 'Failed to submit leave request');
+      setSubmitError(err.message ?? 'Failed to submit leave request');
     } finally {
       setSubmitting(false);
     }
