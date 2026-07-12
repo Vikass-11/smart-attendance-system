@@ -99,3 +99,7 @@ CREATE TABLE timetable_slots (
 CREATE INDEX idx_courses_department ON courses(department_id);
 CREATE INDEX idx_enrollments_student ON course_enrollments(student_id);
 CREATE INDEX idx_timetable_course ON timetable_slots(course_id);
+
+ALTER TABLE courses ADD COLUMN max_students INT DEFAULT NULL;
+ALTER TABLE courses ADD COLUMN semester_start DATE DEFAULT NULL;
+ALTER TABLE courses ADD COLUMN semester_end DATE DEFAULT NULL;
