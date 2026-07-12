@@ -43,6 +43,8 @@ export const updateCourse = async (id: number, input: Partial<CreateCourseInput>
 };
 
 export const deleteCourse = async (id: number) => {
+  await db.delete(courseEnrollments).where(eq(courseEnrollments.courseId, id));
+  await db.delete(timetableSlots).where(eq(timetableSlots.courseId, id));
   await db.delete(courses).where(eq(courses.id, id));
 };
 
@@ -130,4 +132,27 @@ export const getFacultyTimetable = async (facultyId: number) => {
 
 export const deleteTimetableSlot = async (id: number) => {
   await db.delete(timetableSlots).where(eq(timetableSlots.id, id));
+};
+
+export const findOverlappingSlots = async (
+  facultyId: number | null,
+  dayOfWeek: string,
+  startTime: string,
+  endTime: string,
+  excludeSlotId?: number
+) => {
+  if (!facultyId) return [];
+
+  const facultyCourseRows = await db.select().from(courses).where(eq(courses.facultyId, facultyId));
+  const facultyCourseIds = facultyCourseRows.map((c) => c.id);
+
+  if (facultyCourseIds.length === 0) return [];
+
+  const allSlots = await db.select().from(timetableSlots).where(eq(timetableSlots.dayOfWeek, dayOfWeek as any));
+
+  return allSlots.filter((slot) => {
+    if (excludeSlotId && slot.id === excludeSlotId) return false;
+    if (!facultyCourseIds.includes(slot.courseId)) return false;
+    return startTime < slot.endTime && endTime > slot.startTime;
+  });
 };
