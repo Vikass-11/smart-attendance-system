@@ -1,6 +1,6 @@
 import { db } from '../db/client';
 import { courses, courseEnrollments, timetableSlots } from '../db/schema';
-import { eq, like, or, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 
 export interface CreateCourseInput {
   name: string;
@@ -8,16 +8,22 @@ export interface CreateCourseInput {
   departmentId: number;
   credits?: number;
   facultyId?: number | null;
+  maxStudents?: number | null;
+  semesterStart?: string | null;
+  semesterEnd?: string | null;
 }
 
 export const createCourse = async (input: CreateCourseInput) => {
-  const [result] = await db.insert(courses).values({
+  const [result] = await db.insert(courses).values([{
     name: input.name,
     code: input.code,
     departmentId: input.departmentId,
     credits: input.credits ?? 3,
     facultyId: input.facultyId ?? null,
-  });
+    maxStudents: input.maxStudents ?? null,
+    semesterStart: input.semesterStart ? new Date(input.semesterStart) : null,
+    semesterEnd: input.semesterEnd ? new Date(input.semesterEnd) : null,
+  }]);
   return result.insertId;
 };
 
@@ -39,7 +45,18 @@ export const getCoursesByDepartment = async (departmentId: number) => {
 };
 
 export const updateCourse = async (id: number, input: Partial<CreateCourseInput>) => {
-  await db.update(courses).set(input).where(eq(courses.id, id));
+  const updateData: any = { ...input };
+  if (input.semesterStart) {
+    updateData.semesterStart = new Date(input.semesterStart);
+  }
+  if (input.semesterEnd) {
+    updateData.semesterEnd = new Date(input.semesterEnd);
+  }
+  await db.update(courses).set(updateData).where(eq(courses.id, id));
+};
+
+export const unassignFacultyFromCourse = async (courseId: number) => {
+  await db.update(courses).set({ facultyId: null }).where(eq(courses.id, courseId));
 };
 
 export const deleteCourse = async (id: number) => {
@@ -76,6 +93,12 @@ export const unenrollStudent = async (courseId: number, studentId: number) => {
   await db
     .delete(courseEnrollments)
     .where(and(eq(courseEnrollments.courseId, courseId), eq(courseEnrollments.studentId, studentId)));
+};
+
+export const getStudentDepartment = async (studentId: number): Promise<number | null> => {
+  const result: any = await db.execute(sql`SELECT department_id FROM users WHERE id = ${studentId}`);
+  const rows = result[0];
+  return rows[0]?.department_id ?? null;
 };
 
 // Timetable
@@ -153,6 +176,24 @@ export const findOverlappingSlots = async (
   return allSlots.filter((slot) => {
     if (excludeSlotId && slot.id === excludeSlotId) return false;
     if (!facultyCourseIds.includes(slot.courseId)) return false;
+    return startTime < slot.endTime && endTime > slot.startTime;
+  });
+};
+
+export const findRoomConflicts = async (
+  room: string | undefined,
+  dayOfWeek: string,
+  startTime: string,
+  endTime: string,
+  excludeSlotId?: number
+) => {
+  if (!room) return [];
+
+  const allSlots = await db.select().from(timetableSlots).where(eq(timetableSlots.dayOfWeek, dayOfWeek as any));
+
+  return allSlots.filter((slot) => {
+    if (excludeSlotId && slot.id === excludeSlotId) return false;
+    if (slot.room !== room) return false;
     return startTime < slot.endTime && endTime > slot.startTime;
   });
 };
