@@ -30,7 +30,7 @@ const Register = () => {
       navigate('/login?registered=true');
     } catch (error) {
       const err = error as AxiosError<{ error?: string }>;
-      setApiError(err.response?.data?.error ?? 'Registration failed');
+      setApiError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
