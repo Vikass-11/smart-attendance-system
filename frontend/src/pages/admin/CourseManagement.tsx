@@ -6,6 +6,9 @@ import Layout from '../../components/Layout';
 import { courseSchema } from '../../schemas/courseSchema';
 import type { CourseFormData } from '../../schemas/courseSchema';
 import type { Course } from '../../types/course';
+import type { z } from 'zod';
+
+type CourseFormInput = z.input<typeof courseSchema>;
 
 interface Department {
   id: number;
@@ -24,7 +27,7 @@ const CourseManagement = () => {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CourseFormData>({
+  } = useForm<CourseFormInput, unknown, CourseFormData>({
     resolver: zodResolver(courseSchema),
     defaultValues: { credits: 3 },
   });
@@ -57,7 +60,7 @@ const CourseManagement = () => {
       reset({ credits: 3, name: '', code: '', departmentId: undefined });
       await loadData();
     } catch (err: any) {
-      setApiError(err.response?.data?.error || 'Failed to create course');
+      setApiError(err.message || 'Failed to create course');
     } finally {
       setSaving(false);
     }
