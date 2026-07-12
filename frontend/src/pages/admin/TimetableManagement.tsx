@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import { timetableSlotSchema } from '../../schemas/courseSchema';
-import type { TimetableSlotFormData } from '../../schemas/courseSchema';
+import type { TimetableSlotFormInput, TimetableSlotFormData } from '../../schemas/courseSchema';
 import type { Course, TimetableSlot } from '../../types/course';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
@@ -17,13 +17,13 @@ const TimetableManagement = () => {
   const [apiError, setApiError] = useState('');
 
   const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<TimetableSlotFormData>({
-    resolver: zodResolver(timetableSlotSchema),
-  });
+  register,
+  handleSubmit,
+  reset,
+  formState: { errors },
+} = useForm<TimetableSlotFormInput, unknown, TimetableSlotFormData>({
+  resolver: zodResolver(timetableSlotSchema),
+});
 
   const loadData = async () => {
     setLoading(true);
@@ -60,7 +60,7 @@ const TimetableManagement = () => {
       reset();
       await loadData();
     } catch (err: any) {
-      setApiError(err.response?.data?.error || 'Failed to create slot');
+      setApiError(err.message || 'Failed to create slot');
     } finally {
       setSaving(false);
     }
