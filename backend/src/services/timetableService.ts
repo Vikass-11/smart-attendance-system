@@ -9,6 +9,24 @@ export const createSlot = async (input: CreateTimetableSlotInput) => {
   if (!isValidTimeRange(input.startTime, input.endTime)) {
     throw new Error('Start time must be before end time');
   }
+
+  const course = await courseModel.getCourseById(input.courseId);
+  if (!course) {
+    throw new Error('Course not found');
+  }
+
+  if (course.facultyId) {
+    const overlaps = await courseModel.findOverlappingSlots(
+      course.facultyId,
+      input.dayOfWeek,
+      input.startTime,
+      input.endTime
+    );
+    if (overlaps.length > 0) {
+      throw new Error('This faculty member already has a class scheduled at this time');
+    }
+  }
+
   return courseModel.createTimetableSlot(input);
 };
 
