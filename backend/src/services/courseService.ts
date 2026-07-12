@@ -30,6 +30,18 @@ export const removeCourse = async (id: number) => {
 };
 
 export const enrollStudentInCourse = async (courseId: number, studentId: number) => {
+  const course = await courseModel.getCourseById(courseId);
+  if (!course) {
+    throw new Error('Course not found');
+  }
+
+  if (course.maxStudents) {
+    const currentCount = (await courseModel.getEnrolledStudents(courseId)).length;
+    if (currentCount >= course.maxStudents) {
+      throw new Error(`Course is full (max ${course.maxStudents} students)`);
+    }
+  }
+
   return courseModel.enrollStudent(courseId, studentId);
 };
 
