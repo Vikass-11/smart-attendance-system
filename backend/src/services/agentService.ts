@@ -23,6 +23,7 @@ interface PendingAction {
 }
 
 interface Conversation {
+  userId: number;
   messages: ConversationMessage[];
   pendingAction: PendingAction | null;
 }
@@ -94,8 +95,10 @@ export const chat = async (
 ): Promise<{ reply: string; pendingConfirmation: PendingAction | null; conversationId: string }> => {
   let conversation = conversations.get(conversationId);
   if (!conversation) {
-    conversation = { messages: [{ role: 'system', content: SYSTEM_PROMPT }], pendingAction: null };
+    conversation = { userId: user.id, messages: [{ role: 'system', content: SYSTEM_PROMPT }], pendingAction: null };
     conversations.set(conversationId, conversation);
+  } else if (conversation.userId !== user.id) {
+    throw new Error('Conversation not found');
   }
 
   conversation.messages.push({ role: 'user', content: userMessage });
@@ -108,6 +111,9 @@ export const chat = async (
     tools,
   });
 
+  if (!response.choices || response.choices.length === 0) {
+    return { reply: 'The assistant is temporarily unavailable. Please try again.', pendingConfirmation: null, conversationId };
+  }
   const choice = response.choices[0].message;
   conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
 
@@ -155,6 +161,9 @@ export const chat = async (
       tools,
     });
 
+    if (!followUp.choices || followUp.choices.length === 0) {
+      return { reply: sanitizeReply(choice.content || 'Done, but I could not generate a summary.'), pendingConfirmation: null, conversationId };
+    }
     const followUpChoice = followUp.choices[0].message;
     conversation.messages.push({ role: 'assistant', content: followUpChoice.content || '' });
 
@@ -172,6 +181,10 @@ export const confirmPendingAction = async (
   const conversation = conversations.get(conversationId);
 
   if (!conversation?.pendingAction) {
+    return { reply: 'No pending action to confirm.' };
+  }
+
+  if (!conversation.pendingAction) {
     return { reply: 'No pending action to confirm.' };
   }
 
@@ -198,6 +211,10 @@ export const confirmPendingAction = async (
     messages: conversation.messages as any,
     tools,
   });
+
+  if (!followUp.choices || followUp.choices.length === 0) {
+    return { reply: 'Action completed, but I could not generate a summary.' };
+  }
 
   const followUpChoice = followUp.choices[0].message;
   conversation.messages.push({ role: 'assistant', content: followUpChoice.content || '' });
