@@ -5,6 +5,7 @@ export const courseSchema = z.object({
   code: z.string().min(2, 'Course code is required').max(20),
   departmentId: z.coerce.number().min(1, 'Please select a department'),
   credits: z.coerce.number().min(1).max(10).default(3),
+  facultyId: z.coerce.number().optional(),
 });
 
 export type CourseFormInput = z.input<typeof courseSchema>;
