@@ -16,14 +16,26 @@ export const createSlot = async (input: CreateTimetableSlotInput) => {
   }
 
   if (course.facultyId) {
-    const overlaps = await courseModel.findOverlappingSlots(
+    const facultyOverlaps = await courseModel.findOverlappingSlots(
       course.facultyId,
       input.dayOfWeek,
       input.startTime,
       input.endTime
     );
-    if (overlaps.length > 0) {
+    if (facultyOverlaps.length > 0) {
       throw new Error('This faculty member already has a class scheduled at this time');
+    }
+  }
+
+  if (input.room) {
+    const roomConflicts = await courseModel.findRoomConflicts(
+      input.room,
+      input.dayOfWeek,
+      input.startTime,
+      input.endTime
+    );
+    if (roomConflicts.length > 0) {
+      throw new Error(`Room ${input.room} is already booked at this time`);
     }
   }
 
