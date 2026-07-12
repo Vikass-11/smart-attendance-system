@@ -3,11 +3,11 @@ import { getToolsForRole, executeTool, TOOLS } from './agentTools';
 import { AppUser } from '../types';
 
 const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
 });
 
-const MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
+const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -42,7 +42,8 @@ OPERATING RULES:
 - Break down multi-step requests into individual tool calls.
 - Be concise and factual — when presenting lists of data, use simple bullet points, not tables.
 - Never invent or modify any values returned by tools.
-- If a user asks something outside your tools' scope, say so honestly.`;
+- If a user asks something outside your tools' scope, say so honestly.
+- IMPORTANT: Tools like mark_attendance, review_leave_request, and others require a numeric studentId or leaveId, never a name. If the user refers to a student or leave request by name rather than ID, you MUST first call get_students (or get_leave_requests) to look up the correct numeric ID, then use that ID in the follow-up tool call. Never guess or pass a name string where a number is required.`;
 
 const REFUSAL_MESSAGE = "I can't share my internal configuration, but I'm happy to help with attendance, leave, or reports.";
 
@@ -135,6 +136,7 @@ export const chat = async (
     if (toolDef.destructive) {
       conversation.pendingAction = { toolName, input, toolCallId: toolCall.id };
       const proposedReply = choice.content || `I'd like to ${toolName.replace(/_/g, ' ')} with: ${JSON.stringify(input)}. Confirm to proceed?`;
+      console.log('RAW MODEL REPLY BEFORE SANITIZE:', proposedReply);
       return {
         reply: sanitizeReply(proposedReply),
         pendingConfirmation: conversation.pendingAction,
