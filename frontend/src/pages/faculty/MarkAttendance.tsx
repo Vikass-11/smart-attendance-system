@@ -68,38 +68,44 @@ const MarkAttendance = () => {
 
   return (
     <Layout>
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="font-semibold text-slate-900">Mark Attendance</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-slate-100">
+          <div>
+            <h2 className="font-semibold text-slate-900">Mark Attendance</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Select a status for each student</p>
+          </div>
           <input
             type="date"
             value={markDate}
             onChange={(e) => setMarkDate(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm"
+            className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
           />
         </div>
 
-        {saveMessage && <p className="text-sm text-indigo-600 mb-3">{saveMessage}</p>}
+        {saveMessage && (
+          <p className="text-sm text-indigo-600 px-6 pt-4">{saveMessage}</p>
+        )}
 
-        <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
-          {students.length === 0 && <p className="text-sm text-slate-400">No students found.</p>}
+        <div className="divide-y divide-slate-50 max-h-96 overflow-y-auto">
+          {students.length === 0 && <p className="text-sm text-slate-400 p-6">No students found.</p>}
           {students.map((student) => (
-            <div key={student.id} className="flex justify-between items-center border-b border-slate-100 pb-2">
-              <span className="text-sm text-slate-700">{student.name} <span className="text-slate-400">({student.email})</span></span>
+            <div key={student.id} className="flex justify-between items-center px-6 py-3 hover:bg-slate-50/50 transition-colors">
+              <span className="text-sm text-slate-700">
+                {student.name} <span className="text-slate-400">({student.email})</span>
+              </span>
               <div className="flex gap-1">
                 {['present', 'absent', 'late'].map((status) => (
                   <button
                     key={status}
                     onClick={() => handleStatusChange(student.id, status)}
-                    className={`text-xs px-2 py-1 rounded ${
-                      attendanceMap[student.id] === status
+                    className={`text-xs px-3 py-1 rounded-full transition-colors ${attendanceMap[student.id] === status
                         ? status === 'present'
-                          ? 'bg-green-600 text-white'
+                          ? 'bg-emerald-500 text-white'
                           : status === 'absent'
-                          ? 'bg-red-600 text-white'
-                          : 'bg-yellow-500 text-white'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
+                            ? 'bg-red-500 text-white'
+                            : 'bg-amber-500 text-white'
+                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      }`}
                   >
                     {status}
                   </button>
@@ -109,13 +115,15 @@ const MarkAttendance = () => {
           ))}
         </div>
 
-        <button
-          onClick={handleSaveAttendance}
-          disabled={saving || Object.keys(attendanceMap).length === 0}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {saving ? 'Saving...' : `Save Attendance (${Object.keys(attendanceMap).length})`}
-        </button>
+        <div className="p-6 border-t border-slate-100">
+          <button
+            onClick={handleSaveAttendance}
+            disabled={saving || Object.keys(attendanceMap).length === 0}
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+          >
+            {saving ? 'Saving...' : `Save Attendance (${Object.keys(attendanceMap).length})`}
+          </button>
+        </div>
       </div>
     </Layout>
   );
