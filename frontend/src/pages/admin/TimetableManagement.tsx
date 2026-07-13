@@ -17,13 +17,13 @@ const TimetableManagement = () => {
   const [apiError, setApiError] = useState('');
 
   const {
-  register,
-  handleSubmit,
-  reset,
-  formState: { errors },
-} = useForm<TimetableSlotFormInput, unknown, TimetableSlotFormData>({
-  resolver: zodResolver(timetableSlotSchema),
-});
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<TimetableSlotFormInput, unknown, TimetableSlotFormData>({
+    resolver: zodResolver(timetableSlotSchema),
+  });
 
   const loadData = async () => {
     setLoading(true);
@@ -75,8 +75,6 @@ const TimetableManagement = () => {
       console.error('Failed to delete slot', err);
     }
   };
-
-  const getCourseName = (id: number) => courses.find((c) => c.id === id)?.code || '-';
 
   if (loading) return <Layout><p>Loading...</p></Layout>;
 
@@ -130,7 +128,7 @@ const TimetableManagement = () => {
             <button
               type="submit"
               disabled={saving}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap"
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap transition-colors"
             >
               {saving ? '...' : 'Add'}
             </button>
@@ -138,22 +136,34 @@ const TimetableManagement = () => {
         </form>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Current Schedule</h2>
-        <div className="space-y-4">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">Current Schedule</h2>
+        </div>
+        <div className="divide-y divide-slate-50">
           {courses.map((c) => (
-            <div key={c.id}>
-              <p className="text-sm font-medium text-slate-800 mb-1">{c.code} - {c.name}</p>
+            <div key={c.id} className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                  {c.code}
+                </span>
+                <p className="text-sm font-medium text-slate-800">{c.name}</p>
+              </div>
               {(!slots[c.id] || slots[c.id].length === 0) ? (
-                <p className="text-xs text-slate-400 ml-2">No slots scheduled.</p>
+                <p className="text-xs text-slate-400 ml-1">No slots scheduled.</p>
               ) : (
-                <div className="space-y-1 ml-2">
+                <div className="space-y-1.5 ml-1">
                   {slots[c.id].map((s) => (
-                    <div key={s.id} className="flex justify-between items-center text-xs text-slate-600 border-b border-slate-50 pb-1">
-                      <span className="capitalize">
-                        {s.dayOfWeek} • {s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)} {s.room && `• ${s.room}`}
+                    <div key={s.id} className="flex justify-between items-center bg-slate-50 rounded-lg px-3 py-2">
+                      <span className="text-xs text-slate-600 capitalize">
+                        <span className="font-medium text-slate-800">{s.dayOfWeek}</span>
+                        {' • '}{s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)}
+                        {s.room && ` • ${s.room}`}
                       </span>
-                      <button onClick={() => handleDeleteSlot(s.id)} className="text-red-600 hover:underline">
+                      <button
+                        onClick={() => handleDeleteSlot(s.id)}
+                        className="text-xs text-red-600 hover:underline"
+                      >
                         Delete
                       </button>
                     </div>
