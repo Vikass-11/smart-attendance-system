@@ -7,6 +7,8 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import { leaveSchema } from '../../schemas/leaveSchema';
 import type { LeaveFormData } from '../../schemas/leaveSchema';
 import type { AxiosError } from 'axios';
+import { TrendingUp, CalendarCheck, CalendarDays } from 'lucide-react';
+import StatCard from '../../components/StatCard';
 
 interface AttendanceRecord {
   id: number;
@@ -165,18 +167,9 @@ const StudentDashboard = () => {
   return (
     <Layout>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <p className="text-sm text-gray-500">Attendance Percentage</p>
-          <p className="text-3xl font-bold mt-1">{percentage?.percentage ?? 0}%</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <p className="text-sm text-gray-500">Days Present</p>
-          <p className="text-3xl font-bold mt-1">{percentage?.presentDays ?? 0}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <p className="text-sm text-gray-500">Total Days Recorded</p>
-          <p className="text-3xl font-bold mt-1">{percentage?.totalDays ?? 0}</p>
-        </div>
+        <StatCard label="Attendance Percentage" value={`${percentage?.percentage ?? 0}%`} icon={TrendingUp} gradient="from-indigo-500 to-cyan-400" />
+        <StatCard label="Days Present" value={percentage?.presentDays ?? 0} icon={CalendarCheck} gradient="from-emerald-500 to-green-400" />
+        <StatCard label="Total Days Recorded" value={percentage?.totalDays ?? 0} icon={CalendarDays} gradient="from-indigo-500 to-purple-400" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
