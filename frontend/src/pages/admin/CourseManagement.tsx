@@ -220,16 +220,23 @@ const CourseManagement = () => {
         </form>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">All Courses</h2>
-        <div className="space-y-2">
-          {courses.length === 0 && <p className="text-sm text-slate-400">No courses yet.</p>}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">All Courses</h2>
+        </div>
+        <div className="divide-y divide-slate-50">
+          {courses.length === 0 && <p className="text-sm text-slate-400 p-6">No courses yet.</p>}
           {courses.map((c) => (
-            <div key={c.id} className="border border-slate-100 rounded-lg">
-              <div className="flex items-center justify-between p-3">
+            <div key={c.id} className="hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center justify-between p-4">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800">{c.code} — {c.name}</p>
-                  <div className="text-xs text-slate-500 flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                      {c.code}
+                    </span>
+                    <p className="text-sm font-medium text-slate-800">{c.name}</p>
+                  </div>
+                  <div className="text-xs text-slate-500 flex items-center gap-2 mt-1.5">
                     <span>{getDeptName(c.departmentId)} • {c.credits} credits • Faculty:</span>
                     {editingCourseId === c.id ? (
                       <span className="flex items-center gap-1">
@@ -240,7 +247,7 @@ const CourseManagement = () => {
                         >
                           <option value="">Unassigned</option>
                           {facultyList.map((f) => (
-                            <option key={f.id} value={f.id}>{f.name}</option>
+                            <option key={f.id} value={String(f.id)}>{f.name}</option>
                           ))}
                         </select>
                         <button onClick={() => saveEditFaculty(c.id)} className="text-indigo-600 hover:underline">Save</button>
@@ -254,29 +261,33 @@ const CourseManagement = () => {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 shrink-0">
                   <button
                     onClick={() => toggleExpand(c.id)}
-                    className="text-indigo-600 text-xs hover:underline"
+                    className="text-xs px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                   >
                     {expandedCourseId === c.id ? 'Hide Students' : 'Manage Students'}
                   </button>
-                  <button onClick={() => handleDelete(c.id)} className="text-red-600 text-xs hover:underline">
+                  <button
+                    onClick={() => handleDelete(c.id)}
+                    className="text-xs px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                  >
                     Delete
                   </button>
                 </div>
               </div>
 
               {expandedCourseId === c.id && (
-                <div className="border-t border-slate-100 p-3 bg-slate-50">
+                <div className="border-t border-slate-100 p-4 bg-slate-50/50">
                   <p className="text-xs font-medium text-slate-600 mb-2">Enroll / Unenroll Students</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-48 overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-48 overflow-y-auto">
                     {students.map((s) => {
                       const isEnrolled = (enrolledMap[c.id] || []).includes(s.id);
                       return (
                         <label
                           key={s.id}
-                          className="flex items-center gap-2 text-xs text-slate-700 bg-white rounded px-2 py-1.5 border border-slate-100 cursor-pointer"
+                          className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg border cursor-pointer transition-colors ${isEnrolled ? 'bg-indigo-50 border-indigo-200 text-indigo-900' : 'bg-white border-slate-100 text-slate-700'
+                            }`}
                         >
                           <input
                             type="checkbox"
