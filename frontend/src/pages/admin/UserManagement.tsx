@@ -80,25 +80,32 @@ const UserManagement = () => {
         </form>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-slate-500 border-b border-slate-100">
-              <th className="pb-2">Name</th>
-              <th className="pb-2">Email</th>
-              <th className="pb-2">Role</th>
-              <th className="pb-2">Department</th>
-              <th className="pb-2"></th>
+            <tr className="text-left text-slate-500 bg-slate-50 border-b border-slate-100">
+              <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">Email</th>
+              <th className="px-4 py-3 font-medium">Role</th>
+              <th className="px-4 py-3 font-medium">Department</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-slate-100">
-                <td className="py-2 text-slate-700">{u.name}</td>
-                <td className="py-2 text-slate-700">{u.email}</td>
-                <td className="py-2 capitalize text-slate-700">{u.role}</td>
-                <td className="py-2 text-slate-700">{u.department || '-'}</td>
-                <td className="py-2 text-right">
+            {users.map((u, i) => (
+              <tr key={u.id} className={`border-b border-slate-50 hover:bg-indigo-50/30 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'}`}>
+                <td className="px-4 py-3 text-slate-700 font-medium">{u.name}</td>
+                <td className="px-4 py-3 text-slate-500">{u.email}</td>
+                <td className="px-4 py-3">
+                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                      u.role === 'faculty' ? 'bg-cyan-100 text-cyan-700' :
+                        'bg-indigo-100 text-indigo-700'
+                    }`}>
+                    {u.role}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-slate-500">{u.department || '-'}</td>
+                <td className="px-4 py-3 text-right">
                   <button
                     onClick={() => handleDeleteUser(u.id)}
                     className="text-red-600 text-xs hover:underline"
