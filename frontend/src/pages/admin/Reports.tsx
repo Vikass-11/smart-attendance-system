@@ -52,16 +52,25 @@ const Reports = () => {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Reports</h1>
-
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Department-wise Attendance (This Month)</h2>
-        <div className="space-y-2">
-          {deptBreakdown.length === 0 && <p className="text-sm text-slate-400">No data yet.</p>}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-slate-100">
+          <h2 className="font-semibold text-slate-900">Department-wise Attendance (This Month)</h2>
+        </div>
+        <div className="divide-y divide-slate-50">
+          {deptBreakdown.length === 0 && <p className="text-sm text-slate-400 p-6">No data yet.</p>}
           {deptBreakdown.map((d, i) => (
-            <div key={i} className="flex justify-between items-center border-b border-slate-100 pb-2">
+            <div key={i} className="flex justify-between items-center px-6 py-3">
               <span className="text-sm text-slate-700">{d.department || 'Unassigned'}</span>
-              <span className="text-sm font-medium text-slate-900">{d.percentage ?? 0}%</span>
+              <div className="flex items-center gap-3">
+                <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${(d.percentage ?? 0) >= 75 ? 'bg-emerald-500' : (d.percentage ?? 0) >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                      }`}
+                    style={{ width: `${Math.min(d.percentage ?? 0, 100)}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-slate-900 w-12 text-right">{d.percentage ?? 0}%</span>
+              </div>
             </div>
           ))}
         </div>
@@ -72,13 +81,13 @@ const Reports = () => {
         <div className="flex gap-3">
           <button
             onClick={() => handleExport('csv')}
-            className="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm hover:bg-slate-200"
+            className="flex items-center gap-2 bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm hover:bg-slate-100 transition-colors border border-slate-200"
           >
             Export as CSV
           </button>
           <button
             onClick={() => handleExport('pdf')}
-            className="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm hover:bg-slate-200"
+            className="flex items-center gap-2 bg-slate-50 text-slate-700 px-4 py-2.5 rounded-lg text-sm hover:bg-slate-100 transition-colors border border-slate-200"
           >
             Export as PDF
           </button>
