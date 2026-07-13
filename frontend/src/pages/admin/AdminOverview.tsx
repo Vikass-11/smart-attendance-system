@@ -4,6 +4,8 @@ import { Building2, Users, FileText } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import { useAuth } from '../../hooks/useAuth';
+import { Users2, TrendingUp, UserCheck, UserX } from 'lucide-react';
+import StatCard from '../../components/StatCard';
 
 interface Summary {
   total_students: number;
@@ -48,26 +50,10 @@ const AdminOverview = () => {
       <p className="text-slate-500 mb-8">Institution-wide overview for this month.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-cyan-400"></div>
-          <p className="text-sm text-slate-500">Total Students</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.total_students ?? 0}</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-green-400"></div>
-          <p className="text-sm text-slate-500">Overall Attendance</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.overall_percentage ?? 0}%</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-400"></div>
-          <p className="text-sm text-slate-500">Present (This Month)</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.total_present ?? 0}</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-pink-400"></div>
-          <p className="text-sm text-slate-500">Absent (This Month)</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.total_absent ?? 0}</p>
-        </div>
+        <StatCard label="Total Students" value={summary?.total_students ?? 0} icon={Users2} gradient="from-indigo-500 to-cyan-400" />
+        <StatCard label="Overall Attendance" value={`${summary?.overall_percentage ?? 0}%`} icon={TrendingUp} gradient="from-emerald-500 to-green-400" />
+        <StatCard label="Present (This Month)" value={summary?.total_present ?? 0} icon={UserCheck} gradient="from-indigo-500 to-purple-400" />
+        <StatCard label="Absent (This Month)" value={summary?.total_absent ?? 0} icon={UserX} gradient="from-red-500 to-pink-400" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
