@@ -15,25 +15,18 @@ const Reports = () => {
   const monthStart = today.slice(0, 8) + '01';
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void (async () => {
-        try {
-          const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
-          const breakdownRaw = res.data?.data?.departmentBreakdown ?? res.data?.departmentBreakdown ?? [];
-          const breakdown = Array.isArray(breakdownRaw) ? breakdownRaw : breakdownRaw?.rows ?? [];
-          setDeptBreakdown(breakdown);
-        } catch (err) {
-          console.error('Failed to load reports', err);
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timeoutId);
+    const loadData = async () => {
+      try {
+        const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
+        setDeptBreakdown(res.data.data?.departmentBreakdown || res.data.departmentBreakdown || []);
+      } catch (err) {
+        console.error('Failed to load reports', err);
+      } finally {
+        setLoading(false);
+      }
     };
-  }, [monthStart, today]);
+    loadData();
+  }, []);
 
   const handleExport = async (type: 'csv' | 'pdf') => {
     const res = await apiClient.get(`/reports/export/${type}?fromDate=${monthStart}&toDate=${today}`, {
@@ -52,6 +45,8 @@ const Reports = () => {
 
   return (
     <Layout>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Reports</h1>
+
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-slate-100">
           <h2 className="font-semibold text-slate-900">Department-wise Attendance (This Month)</h2>
