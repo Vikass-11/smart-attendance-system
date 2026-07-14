@@ -6,6 +6,7 @@ import Layout from '../../components/Layout';
 import { useAuth } from '../../hooks/useAuth';
 import { Users2, TrendingUp, UserCheck, UserX } from 'lucide-react';
 import StatCard from '../../components/StatCard';
+import { useDashboardStore } from '../../store/dashboardStore';
 
 interface Summary {
   total_students: number;
@@ -16,6 +17,7 @@ interface Summary {
 
 const AdminOverview = () => {
   const { appUser } = useAuth();
+  const { getCached, setCache } = useDashboardStore();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,23 +25,30 @@ const AdminOverview = () => {
   const monthStart = today.slice(0, 8) + '01';
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      void (async () => {
-        try {
-          const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
-          const summaryObj = res.data?.data?.summary ?? res.data?.summary ?? null;
-          setSummary(summaryObj);
-        } catch (err) {
-          console.error('Failed to load summary', err);
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }, 0);
+    const cacheKey = 'admin-overview';
 
-    return () => {
-      window.clearTimeout(timeoutId);
+    const loadData = async () => {
+      const cached = getCached(cacheKey);
+
+      if (cached) {
+        setSummary(cached as Summary);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await apiClient.get(`/reports/summary?fromDate=${monthStart}&toDate=${today}`);
+        const summaryData = res.data.data?.summary;
+        setSummary(summaryData);
+        setCache(cacheKey, summaryData);
+      } catch (err) {
+        console.error('Failed to load summary', err);
+      } finally {
+        setLoading(false);
+      }
     };
+
+    loadData();
   }, [monthStart, today]);
 
   if (loading) return <Layout><p>Loading...</p></Layout>;
