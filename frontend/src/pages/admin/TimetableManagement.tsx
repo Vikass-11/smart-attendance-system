@@ -49,7 +49,8 @@ const TimetableManagement = () => {
   };
 
   useEffect(() => {
-    loadData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
   }, []);
 
   const onSubmit = async (data: TimetableSlotFormData) => {
@@ -59,8 +60,12 @@ const TimetableManagement = () => {
       await apiClient.post('/timetable', data);
       reset();
       await loadData();
-    } catch (err: any) {
-      setApiError(err.message || 'Failed to create slot');
+    } catch (err: unknown) {
+      let message = 'Failed to create slot';
+      if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+        message = (err as { message: string }).message;
+      }
+      setApiError(message);
     } finally {
       setSaving(false);
     }

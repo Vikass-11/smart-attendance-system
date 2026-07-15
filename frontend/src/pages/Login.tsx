@@ -29,9 +29,30 @@ const Login = () => {
     try {
       await login(data.email, data.password);
       navigate('/dashboard');
-    } catch (err: any) {
-      const message = err.response?.data?.error?.message || err.response?.data?.error || 'Invalid email or password';
-      setApiError(typeof message === 'string' ? message : 'Invalid email or password');
+    } catch (err: unknown) {
+      let message = 'Invalid email or password';
+
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const response = (err as { response?: unknown }).response;
+        if (typeof response === 'object' && response !== null && 'data' in response) {
+          const dataObj = (response as { data?: unknown }).data;
+          if (typeof dataObj === 'object' && dataObj !== null && 'error' in dataObj) {
+            const errorValue = (dataObj as { error?: unknown }).error;
+            if (typeof errorValue === 'string') {
+              message = errorValue;
+            } else if (
+              typeof errorValue === 'object' &&
+              errorValue !== null &&
+              'message' in errorValue &&
+              typeof (errorValue as { message?: unknown }).message === 'string'
+            ) {
+              message = (errorValue as { message: string }).message;
+            }
+          }
+        }
+      }
+
+      setApiError(message);
     } finally {
       setLoading(false);
     }
