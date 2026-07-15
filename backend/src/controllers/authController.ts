@@ -91,7 +91,8 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
       message: 'Login successful',
       data: { user },
     });
-  } catch {
+  } catch (error) {
+    console.error('Login error:', error);
     next(new AppError('Login failed', 500, 'LOGIN_FAILED'));
   }
 };
