@@ -35,6 +35,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+app.get('/', (req, res) => {
+  res.send('Smart Attendance System API is running.');
+});
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 app.use('/api/auth', authRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave', leaveRoutes);
