@@ -65,18 +65,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Cache frontend npm
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: frontend-npm-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: frontend-npm-
-      - name: Install frontend deps
+      - name: Clear npm cache
+        run: npm cache clean --force
+      - name: Install frontend deps (no optional)
         working-directory: frontend
-        run: npm ci || npm install
-      - name: Rebuild native modules
+        # avoid optional deps being skipped in cache; force fresh install for native bindings
+        run: npm ci --no-optional || npm install --no-optional
+      - name: Rebuild rolldown native binding
         working-directory: frontend
-        run: npm rebuild || true
+        # attempt to rebuild rolldown from source then general rebuild as fallback
+        run: npm rebuild @rolldown/binding --build-from-source || npm rebuild || true
       - name: Build frontend
         working-directory: frontend
         run: npm run build
