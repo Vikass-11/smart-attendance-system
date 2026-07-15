@@ -6,8 +6,13 @@ import { randomUUID } from 'crypto';
 export const chatWithAgent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { message, conversationId } = req.body;
 
-  if (!message) {
-    res.status(400).json({ error: 'message is required' });
+  if (!message || typeof message !== 'string') {
+    res.status(400).json({ error: 'message is required and must be a string' });
+    return;
+  }
+
+  if (conversationId != null && typeof conversationId !== 'string') {
+    res.status(400).json({ error: 'conversationId must be a string' });
     return;
   }
 
@@ -17,6 +22,19 @@ export const chatWithAgent = async (req: AuthenticatedRequest, res: Response): P
     const result = await agentService.chat(convId, message, req.user!);
     res.json(result);
   } catch (err: any) {
+    const isFunctionCallError =
+      err.message?.includes('tool call validation failed') ||
+      err.message?.includes('Failed to call a function') ||
+      err.status === 400;
+
+    if (isFunctionCallError) {
+      res.json({
+        reply: "I had trouble understanding that request precisely. Could you rephrase it more simply — for example, 'mark student ID 7 present today'?",
+        pendingConfirmation: null,
+        conversationId: convId,
+      });
+      return;
+    }
     res.status(500).json({ error: 'Agent failed to respond', details: err.message });
   }
 };

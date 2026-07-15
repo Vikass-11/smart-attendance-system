@@ -30,9 +30,9 @@ const Login = () => {
     try {
       await login(data.email, data.password);
       navigate('/dashboard');
-    } catch (error) {
-      const err = error as AxiosError<{ error?: string }>;
-      setApiError(err.response?.data?.error ?? 'Invalid email or password');
+    } catch (err: any) {
+      const message = err.response?.data?.error?.message || err.response?.data?.error || 'Invalid email or password';
+      setApiError(typeof message === 'string' ? message : 'Invalid email or password');
     } finally {
       setLoading(false);
     }

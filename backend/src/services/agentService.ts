@@ -3,11 +3,11 @@ import { getToolsForRole, executeTool, TOOLS } from './agentTools';
 import { AppUser } from '../types';
 
 const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1',
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
 });
 
-const MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-8b-instruct:free';
+const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -23,6 +23,7 @@ interface PendingAction {
 }
 
 interface Conversation {
+  userId: number;
   messages: ConversationMessage[];
   pendingAction: PendingAction | null;
 }
@@ -41,7 +42,8 @@ OPERATING RULES:
 - Break down multi-step requests into individual tool calls.
 - Be concise and factual — when presenting lists of data, use simple bullet points, not tables.
 - Never invent or modify any values returned by tools.
-- If a user asks something outside your tools' scope, say so honestly.`;
+- If a user asks something outside your tools' scope, say so honestly.
+- IMPORTANT: Tools like mark_attendance, review_leave_request, and others require a numeric studentId or leaveId, never a name. If the user refers to a student or leave request by name rather than ID, you MUST first call get_students (or get_leave_requests) to look up the correct numeric ID, then use that ID in the follow-up tool call. Never guess or pass a name string where a number is required.`;
 
 const REFUSAL_MESSAGE = "I can't share my internal configuration, but I'm happy to help with attendance, leave, or reports.";
 
@@ -94,8 +96,10 @@ export const chat = async (
 ): Promise<{ reply: string; pendingConfirmation: PendingAction | null; conversationId: string }> => {
   let conversation = conversations.get(conversationId);
   if (!conversation) {
-    conversation = { messages: [{ role: 'system', content: SYSTEM_PROMPT }], pendingAction: null };
+    conversation = { userId: user.id, messages: [{ role: 'system', content: SYSTEM_PROMPT }], pendingAction: null };
     conversations.set(conversationId, conversation);
+  } else if (conversation.userId !== user.id) {
+    throw new Error('Conversation not found');
   }
 
   conversation.messages.push({ role: 'user', content: userMessage });
@@ -108,6 +112,9 @@ export const chat = async (
     tools,
   });
 
+  if (!response.choices || response.choices.length === 0) {
+    return { reply: 'The assistant is temporarily unavailable. Please try again.', pendingConfirmation: null, conversationId };
+  }
   const choice = response.choices[0].message;
   conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
 
@@ -129,6 +136,7 @@ export const chat = async (
     if (toolDef.destructive) {
       conversation.pendingAction = { toolName, input, toolCallId: toolCall.id };
       const proposedReply = choice.content || `I'd like to ${toolName.replace(/_/g, ' ')} with: ${JSON.stringify(input)}. Confirm to proceed?`;
+      console.log('RAW MODEL REPLY BEFORE SANITIZE:', proposedReply);
       return {
         reply: sanitizeReply(proposedReply),
         pendingConfirmation: conversation.pendingAction,
@@ -136,7 +144,12 @@ export const chat = async (
       };
     }
 
-    const result = await executeTool(toolName, input, user);
+    let result: any;
+    try {
+      result = await executeTool(toolName, input, user);
+    } catch (err: any) {
+      result = { error: err.message };
+    }
 
     conversation.messages.push({
       role: 'tool',
@@ -150,6 +163,9 @@ export const chat = async (
       tools,
     });
 
+    if (!followUp.choices || followUp.choices.length === 0) {
+      return { reply: sanitizeReply(choice.content || 'Done, but I could not generate a summary.'), pendingConfirmation: null, conversationId };
+    }
     const followUpChoice = followUp.choices[0].message;
     conversation.messages.push({ role: 'assistant', content: followUpChoice.content || '' });
 
@@ -170,6 +186,10 @@ export const confirmPendingAction = async (
     return { reply: 'No pending action to confirm.' };
   }
 
+  if (!conversation.pendingAction) {
+    return { reply: 'No pending action to confirm.' };
+  }
+
   const { toolName, input, toolCallId } = conversation.pendingAction;
   conversation.pendingAction = null;
 
@@ -178,10 +198,14 @@ export const confirmPendingAction = async (
     return { reply: 'Okay, action cancelled.' };
   }
 
-  const result = await executeTool(toolName, input, user);
+  let result: any;
+  try {
+    result = await executeTool(toolName, input, user);
+  } catch (err: any) {
+    result = { error: err.message };
+  }
 
   conversation.messages.push({ role: 'tool', tool_call_id: toolCallId, content: JSON.stringify(result) });
-
   const tools = toOpenAITools(user.role);
 
   const followUp = await client.chat.completions.create({
@@ -189,6 +213,10 @@ export const confirmPendingAction = async (
     messages: conversation.messages as any,
     tools,
   });
+
+  if (!followUp.choices || followUp.choices.length === 0) {
+    return { reply: 'Action completed, but I could not generate a summary.' };
+  }
 
   const followUpChoice = followUp.choices[0].message;
   conversation.messages.push({ role: 'assistant', content: followUpChoice.content || '' });

@@ -61,3 +61,45 @@ CREATE TABLE leave_requests (
     FOREIGN KEY (student_id) REFERENCES users(id),
     FOREIGN KEY (reviewed_by) REFERENCES users(id)
 );
+-- Course Management
+
+CREATE TABLE courses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    code VARCHAR(20) NOT NULL UNIQUE,
+    department_id INT NOT NULL,
+    credits INT DEFAULT 3,
+    faculty_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES departments(id),
+    FOREIGN KEY (faculty_id) REFERENCES users(id)
+);
+
+CREATE TABLE course_enrollments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    student_id INT NOT NULL,
+    enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id),
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    UNIQUE KEY unique_enrollment (course_id, student_id)
+);
+
+CREATE TABLE timetable_slots (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    day_of_week ENUM('monday','tuesday','wednesday','thursday','friday','saturday') NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    room VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+CREATE INDEX idx_courses_department ON courses(department_id);
+CREATE INDEX idx_enrollments_student ON course_enrollments(student_id);
+CREATE INDEX idx_timetable_course ON timetable_slots(course_id);
+
+ALTER TABLE courses ADD COLUMN max_students INT DEFAULT NULL;
+ALTER TABLE courses ADD COLUMN semester_start DATE DEFAULT NULL;
+ALTER TABLE courses ADD COLUMN semester_end DATE DEFAULT NULL;

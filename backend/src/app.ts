@@ -10,6 +10,8 @@ import { requestLogger } from './middleware/requestLogger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import setupSwagger from './swagger';
 import agentRoutes from './routes/agentRoutes';
+import courseRoutes from './routes/courseRoutes';
+import timetableRoutes from './routes/timetableRoutes';
 
 
 const app: Application = express();
@@ -24,7 +26,8 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(requestLogger);
 app.use('/api/agent', agentRoutes);
-
+app.use('/api/courses', courseRoutes);
+app.use('/api/timetable', timetableRoutes);
 // OpenAPI docs
 setupSwagger(app);
 
