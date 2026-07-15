@@ -76,8 +76,6 @@ const TimetableManagement = () => {
     }
   };
 
-  const getCourseName = (id: number) => courses.find((c) => c.id === id)?.code || '-';
-
   if (loading) return <Layout><p>Loading...</p></Layout>;
 
   return (

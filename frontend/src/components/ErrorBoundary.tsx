@@ -9,12 +9,12 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, State> 
   }
 
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
+    return { hasError: false, error };
   }
 
-  componentDidCatch(error: Error, info: any) {
+  componentDidCatch(_error: Error, _info: any) {
     // optional: send to remote logging
-    // console.error('Uncaught error in component tree', error, info);
+    // console.error('Uncaught error in component tree', _error, _info);
   }
 
   render() {

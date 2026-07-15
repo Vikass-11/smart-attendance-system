@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, CheckCircle2 } from 'lucide-react';
-import type { AxiosError } from 'axios';
 import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../schemas/authSchemas';
 import type { LoginFormData } from '../schemas/authSchemas';
