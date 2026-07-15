@@ -53,8 +53,8 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
       next(new AppError(error.message, 409, 'DUPLICATE_RESOURCE'));
       return;
     }
-
-    next(new AppError('Registration failed', 500, 'REGISTRATION_FAILED'));
+    console.error('Registration error:', error);
+    next(error);
   }
 };
 
@@ -93,7 +93,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     });
   } catch (error) {
     console.error('Login error:', error);
-    next(new AppError('Login failed', 500, 'LOGIN_FAILED'));
+    next(error);
   }
 };
 
