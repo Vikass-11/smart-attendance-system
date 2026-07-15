@@ -71,6 +71,12 @@ jobs:
         working-directory: frontend
         # avoid optional deps being skipped in cache; force fresh install for native bindings
         run: npm ci --no-optional || npm install --no-optional
+      - name: Install rolldown platform binding (best-effort)
+        working-directory: frontend
+        # try installing the prebuilt binding for the runner platform (no-save so lockfile unchanged)
+        run: |
+          set -e
+          npm install @rolldown/binding-linux-x64-gnu --no-save --no-audit || true
       - name: Rebuild rolldown native binding
         working-directory: frontend
         # attempt to rebuild rolldown from source then general rebuild as fallback
