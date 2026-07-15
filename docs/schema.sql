@@ -9,9 +9,11 @@ CREATE TABLE IF NOT EXISTS departments (
 
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    firebase_uid VARCHAR(128) NOT NULL UNIQUE,
+    firebase_uid VARCHAR(128) UNIQUE,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
     role ENUM('student', 'faculty', 'admin') NOT NULL,
     department_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
