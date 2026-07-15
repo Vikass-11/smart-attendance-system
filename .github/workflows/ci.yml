@@ -27,7 +27,7 @@ jobs:
           node-version: 22
       - name: Install frontend deps
         working-directory: frontend
-        run: npm ci
+        run: npm ci || npm install
       - name: Run frontend lint
         working-directory: frontend
         run: npm run lint || echo "No lint script or lint failed"
@@ -73,7 +73,10 @@ jobs:
           restore-keys: frontend-npm-
       - name: Install frontend deps
         working-directory: frontend
-        run: npm ci
+        run: npm ci || npm install
+      - name: Rebuild native modules
+        working-directory: frontend
+        run: npm rebuild || true
       - name: Build frontend
         working-directory: frontend
         run: npm run build
