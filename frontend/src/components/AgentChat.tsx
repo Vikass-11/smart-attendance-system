@@ -5,7 +5,7 @@ import apiClient from '../api/axiosClient';
 
 interface PendingConfirmation {
   toolName: string;
-  input: Record<string, any>;
+  input: Record<string, unknown>;
   toolCallId: string;
 }
 
@@ -49,7 +49,8 @@ const AgentChat = () => {
         ...prev,
         { id: nextId(), role: 'assistant', text: res.data.reply, pendingConfirmation: res.data.pendingConfirmation },
       ]);
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error('Agent chat error', err);
       setMessages((prev) => [...prev, { id: nextId(), role: 'assistant', text: 'Sorry, something went wrong.' }]);
     } finally {
       setLoading(false);
@@ -69,7 +70,8 @@ const AgentChat = () => {
         ...prev.map((m) => (m.pendingConfirmation ? { ...m, pendingConfirmation: null } : m)),
         { id: nextId(), role: 'assistant', text: res.data.reply },
       ]);
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error('Agent confirmation error', err);
       setMessages((prev) => [...prev, { id: nextId(), role: 'assistant', text: 'Failed to process confirmation.' }]);
     } finally {
       setLoading(false);

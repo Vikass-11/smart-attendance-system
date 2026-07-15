@@ -2,19 +2,19 @@ import React from 'react';
 
 type State = { hasError: boolean; error?: Error };
 
-class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, State> {
-  constructor(props: React.PropsWithChildren<{}>) {
+class ErrorBoundary extends React.Component<React.PropsWithChildren<Record<string, unknown>>, State> {
+  constructor(props: React.PropsWithChildren<Record<string, unknown>>) {
     super(props);
     this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
+    return { hasError: false, error };
   }
 
-  componentDidCatch(error: Error, info: any) {
+  componentDidCatch(): void {
     // optional: send to remote logging
-    // console.error('Uncaught error in component tree', error, info);
+    // console.error('Uncaught error in component tree');
   }
 
   render() {

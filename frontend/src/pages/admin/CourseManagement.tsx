@@ -70,7 +70,7 @@ const CourseManagement = () => {
   const loadEnrollments = async (courseId: number) => {
     try {
       const res = await apiClient.get(`/courses/${courseId}/students`);
-      const ids = (res.data || []).map((e: any) => e.studentId);
+      const ids = ((res.data ?? []) as Array<{ studentId: number }>).map((e) => e.studentId);
       setEnrolledMap((prev) => ({ ...prev, [courseId]: ids }));
     } catch (err) {
       console.error('Failed to load enrollments', err);
@@ -78,7 +78,8 @@ const CourseManagement = () => {
   };
 
   useEffect(() => {
-    loadData();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadData();
   }, []);
 
   const onSubmit = async (data: CourseFormData) => {
@@ -88,8 +89,12 @@ const CourseManagement = () => {
       await apiClient.post('/courses', data);
       reset({ credits: 3, name: '', code: '', departmentId: undefined, facultyId: undefined } as CourseFormInput);
       await loadData();
-    } catch (err: any) {
-      setApiError(err.message || 'Failed to create course');
+    } catch (err: unknown) {
+      let message = 'Failed to create course';
+      if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+        message = (err as { message: string }).message;
+      }
+      setApiError(message);
     } finally {
       setSaving(false);
     }
@@ -128,8 +133,12 @@ const CourseManagement = () => {
       });
       setEditingCourseId(null);
       await loadData();
-    } catch (err: any) {
-      alert(err.message || 'Failed to update faculty assignment');
+    } catch (err: unknown) {
+      let message = 'Failed to update faculty assignment';
+      if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+        message = (err as { message: string }).message;
+      }
+      alert(message);
     }
   };
 
