@@ -16,9 +16,10 @@ import timetableRoutes from './routes/timetableRoutes';
 
 const app: Application = express();
 
+const frontendOrigin = process.env.FRONTEND_ORIGIN?.replace(/\/$/, '') || 'http://localhost:5173';
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+    origin: frontendOrigin,
     credentials: true,
   })
 );
