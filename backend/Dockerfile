@@ -2,6 +2,7 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY package*.json tsconfig*.json ./
+COPY server.ts ./
 COPY src ./src
 RUN npm ci
 RUN npm run build
