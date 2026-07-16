@@ -9,3 +9,8 @@ firebase-service-account.json
 logs/
 *.csv
 *.pdf
+
+# Temporary debug/scratch files
+scratch/
+scratch*.js
+backend/scratch.js
