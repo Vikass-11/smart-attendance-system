@@ -1,7 +1,9 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+
+// Cast the fallback string to match the expected SignOptions['expiresIn'] type
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '1d') as SignOptions['expiresIn'];
 
 export const createAccessToken = (user: any): string => {
   return jwt.sign(
