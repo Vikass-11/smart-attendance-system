@@ -63,10 +63,11 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
     const accessToken = createAccessToken(user);
 
     // Set HttpOnly cookie for access token (for improved security)
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -121,10 +122,11 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
     const accessToken = createAccessToken(user);
 
     // Set HttpOnly cookie containing the access token
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -156,7 +158,12 @@ export const getMe = async (
 
 export const logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    res.clearCookie('access_token', { httpOnly: true, sameSite: 'lax' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('access_token', { 
+      httpOnly: true, 
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax' 
+    });
     sendSuccess(res, { message: 'Logged out successfully', data: null });
   } catch (err) {
     next(new AppError('Logout failed', 500, 'LOGOUT_FAILED'));
