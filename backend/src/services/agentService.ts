@@ -339,7 +339,8 @@ export const chat = async (
       model: MODEL,
       messages: conversation.messages as any,
       tools,
-    });
+      parallel_tool_calls: false,
+    } as any);
 
     if (!response.choices || response.choices.length === 0) {
       return { reply: 'The assistant is temporarily unavailable. Please try again.', pendingConfirmation: null, conversationId };
@@ -462,7 +463,8 @@ export const confirmPendingAction = async (
       model: MODEL,
       messages: conversation.messages as any,
       tools,
-    });
+      parallel_tool_calls: false,
+    } as any);
 
     if (!followUp.choices || followUp.choices.length === 0) {
       return { reply: 'Action completed, but I could not generate a summary.' };
