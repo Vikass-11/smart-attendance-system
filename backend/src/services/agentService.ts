@@ -277,6 +277,35 @@ const safeParseArguments = (raw: string): any => {
   }
 };
 
+// Groq/Llama sometimes returns malformed tool names like 'get_students={"search":"foo"}'
+// This helper detects and fixes that by splitting the name and args.
+const sanitizeToolCalls = (toolCalls: any[]): any[] => {
+  if (!toolCalls) return toolCalls;
+  return toolCalls.map((tc) => {
+    if (tc.type !== 'function') return tc;
+    const name: string = tc.function.name || '';
+    // Detect pattern: toolname={...} or toolname {"..."}  
+    const eqIdx = name.indexOf('=');
+    if (eqIdx !== -1) {
+      const realName = name.slice(0, eqIdx).trim();
+      const embeddedArgs = name.slice(eqIdx + 1).trim();
+      return {
+        ...tc,
+        function: {
+          ...tc.function,
+          name: realName,
+          arguments: embeddedArgs || tc.function.arguments || '{}',
+        },
+      };
+    }
+    // Ensure arguments is always valid JSON
+    if (!tc.function.arguments) {
+      return { ...tc, function: { ...tc.function, arguments: '{}' } };
+    }
+    return tc;
+  });
+};
+
 const toOpenAITools = (role: string) =>
   getToolsForRole(role).map((t) => ({
     type: 'function' as const,
@@ -316,13 +345,8 @@ export const chat = async (
       return { reply: 'The assistant is temporarily unavailable. Please try again.', pendingConfirmation: null, conversationId };
     }
     const choice = response.choices[0].message;
-    
     if (choice.tool_calls) {
-      for (const tc of choice.tool_calls) {
-        if (tc.type === 'function' && !tc.function.arguments) {
-          tc.function.arguments = '{}';
-        }
-      }
+      choice.tool_calls = sanitizeToolCalls(choice.tool_calls);
     }
 
     conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
@@ -447,11 +471,7 @@ export const confirmPendingAction = async (
     const choice = followUp.choices[0].message;
 
     if (choice.tool_calls) {
-      for (const tc of choice.tool_calls) {
-        if (tc.type === 'function' && !tc.function.arguments) {
-          tc.function.arguments = '{}';
-        }
-      }
+      choice.tool_calls = sanitizeToolCalls(choice.tool_calls);
     }
 
     conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
