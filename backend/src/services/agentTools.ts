@@ -242,6 +242,14 @@ export const executeTool = async (toolName: string, rawInput: unknown, user: App
 
   switch (toolName) {
     case 'get_attendance': {
+      if (!input.studentId && !input.date && !input.fromDate && !input.toDate) {
+         const to = new Date();
+         const from = new Date();
+         from.setDate(to.getDate() - 30);
+         input.fromDate = from.toISOString().split('T')[0];
+         input.toDate = to.toISOString().split('T')[0];
+      }
+      
       if (input.studentId) {
         return attendanceService.fetchStudentHistory(input.studentId);
       }
