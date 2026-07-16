@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, User, Users } from 'lucide-react';
+import { GraduationCap, Mail, Lock, User, Users, Info } from 'lucide-react';
 import type { AxiosError } from 'axios';
 import apiClient from '../api/axiosClient';
 import { registerSchema } from '../schemas/authSchemas';
@@ -11,7 +11,24 @@ import type { RegisterFormData } from '../schemas/authSchemas';
 const Register = () => {
   const [apiError, setApiError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [adminExists, setAdminExists] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const res = await apiClient.get('/auth/admin-exists');
+        const exists = res.data?.data?.adminExists ?? false;
+        setAdminExists(exists);
+      } catch (err) {
+        console.error('Failed to check admin status', err);
+      } finally {
+        setCheckingAdmin(false);
+      }
+    };
+    void checkAdmin();
+  }, []);
 
   const {
     register,
@@ -52,6 +69,13 @@ const Register = () => {
         {apiError && (
           <div className="text-red-300 text-sm mb-4 bg-red-500/10 border border-red-400/20 rounded-lg p-3">
             {apiError}
+          </div>
+        )}
+
+        {!adminExists && !checkingAdmin && (
+          <div className="flex gap-2 text-indigo-300 text-sm mb-6 bg-indigo-500/10 border border-indigo-400/20 rounded-lg p-3">
+            <Info className="w-5 h-5 shrink-0" />
+            <p>No system administrator exists yet. You can register as the first Admin.</p>
           </div>
         )}
 
@@ -98,26 +122,27 @@ const Register = () => {
             {errors.password && <p className="text-red-300 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Role</label>
-            <div className="relative">
-              <Users className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
-              <select
-                {...register('role')}
-                className="w-full bg-white/5 border border-white/15 text-white rounded-lg pl-10 pr-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
-              >
-                <option value="student" className="bg-slate-800">Student</option>
-                <option value="faculty" className="bg-slate-800">Faculty</option>
-                <option value="admin" className="bg-slate-800">Admin</option>
-              </select>
+          {!checkingAdmin && (
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Role</label>
+              <div className="relative">
+                <Users className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+                <select
+                  {...register('role')}
+                  className="w-full bg-white/5 border border-white/15 text-white rounded-lg pl-10 pr-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                >
+                  <option value="student" className="bg-slate-800">Student</option>
+                  {!adminExists && <option value="admin" className="bg-slate-800">Admin</option>}
+                </select>
+              </div>
+              {errors.role && <p className="text-red-300 text-xs mt-1">{errors.role.message}</p>}
             </div>
-            {errors.role && <p className="text-red-300 text-xs mt-1">{errors.role.message}</p>}
-          </div>
+          )}
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-400 transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/30"
+            disabled={loading || checkingAdmin}
+            className="w-full bg-indigo-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-400 transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/30 mt-6"
           >
             {loading ? 'Creating account...' : 'Register'}
           </button>
