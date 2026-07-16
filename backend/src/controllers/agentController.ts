@@ -28,8 +28,9 @@ export const chatWithAgent = async (req: AuthenticatedRequest, res: Response): P
       err.status === 400;
 
     if (isFunctionCallError) {
+      console.error('Agent function call error:', err);
       res.json({
-        reply: "I had trouble understanding that request precisely. Could you rephrase it more simply — for example, 'mark student ID 7 present today'?",
+        reply: `I encountered an issue processing that: ${err.message}`,
         pendingConfirmation: null,
         conversationId: convId,
       });

@@ -314,6 +314,15 @@ export const chat = async (
     return { reply: 'The assistant is temporarily unavailable. Please try again.', pendingConfirmation: null, conversationId };
   }
   const choice = response.choices[0].message;
+  
+  if (choice.tool_calls) {
+    for (const tc of choice.tool_calls) {
+      if (tc.type === 'function' && !tc.function.arguments) {
+        tc.function.arguments = '{}';
+      }
+    }
+  }
+
   conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
 
   const toolCall = choice.tool_calls?.[0];
