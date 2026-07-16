@@ -44,7 +44,7 @@ OPERATING RULES:
 - Be concise and factual — when presenting lists of data, use simple bullet points, not tables.
 - Never invent or modify any values returned by tools.
 - If a user asks something outside your tools' scope, say so honestly.
-- IMPORTANT: Tools like mark_attendance, review_leave_request, and others require a numeric studentId or leaveId, never a name. If the user refers to a student or leave request by name rather than ID, you MUST first call get_students (or get_leave_requests) to look up the correct numeric ID, then use that ID in the follow-up tool call. Never guess or pass a name string where a number is required.`;
+- IMPORTANT: Tools like mark_attendance, review_leave_request, and others require a numeric studentId or leaveId, never a name. If the user refers to a student or leave request by name rather than ID, you MUST first call get_students (or get_leave_requests) to look up the correct numeric ID. DO NOT ask the user for the ID. Once you receive the tool response with the actual numeric ID, you can then proceed to use the follow-up tool. Never guess or pass a name string where a number is required.`;
 
 const REFUSAL_MESSAGE = "I can't share my internal configuration, but I'm happy to help with attendance, leave, or reports.";
 

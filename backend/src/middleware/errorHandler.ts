@@ -23,12 +23,20 @@ export const errorHandler = (
   const message = err.message || 'Internal server error';
   const code = err instanceof AppError ? err.code : 'INTERNAL_ERROR';
 
-  logger.error(message, {
-    stack: err.stack,
-    path: req.originalUrl,
-    method: req.method,
-    code,
-  });
+  if (statusCode >= 500) {
+    logger.error(message, {
+      stack: err.stack,
+      path: req.originalUrl,
+      method: req.method,
+      code,
+    });
+  } else {
+    logger.warn(message, {
+      path: req.originalUrl,
+      method: req.method,
+      code,
+    });
+  }
 
   res.status(statusCode).json({
     success: false,
