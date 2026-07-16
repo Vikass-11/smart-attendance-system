@@ -15,6 +15,13 @@
       "when": 1783849074604,
       "tag": "0001_steep_maggott",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1784161513069,
+      "tag": "0002_open_shiva",
+      "breakpoints": true
     }
   ]
 }

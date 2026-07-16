@@ -6,6 +6,7 @@ export interface AppUser {
   email: string;
   role: 'student' | 'faculty' | 'admin';
   departmentId: number | null;
+  isSystemAdmin?: boolean;
 }
 
 export interface AuthenticatedRequest extends Request {

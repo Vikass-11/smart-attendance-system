@@ -27,8 +27,10 @@ export const users = mysqlTable('users', {
   passwordHash: varchar('password_hash', { length: 255 }), // nullable — only for local auth
   isActive: boolean('is_active').default(true),
   role: mysqlEnum('role', ['student', 'faculty', 'admin']).notNull(),
+  isSystemAdmin: boolean('is_system_admin').default(false), // true only for the first-ever registered admin — cannot be demoted
   departmentId: int('department_id').references(() => departments.id),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
 // ─── Subjects ────────────────────────────────────────────────────────────────
