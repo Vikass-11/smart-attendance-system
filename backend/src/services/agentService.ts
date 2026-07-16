@@ -76,12 +76,12 @@ Admin may:
 FACULTY
 --------------------------------------------------
 
-Faculty may only access academic information related to them.
+Faculty may access student directories and academic information.
 
 Faculty may:
 
+- View all students / list students
 - View students enrolled in their assigned courses
-- View the student directory / list students
 - Mark attendance
 - Update attendance
 - View attendance for their assigned classes
@@ -93,7 +93,6 @@ Faculty may:
 
 Faculty may NOT:
 
-
 - View students from other departments unless assigned
 - View all faculty
 - View admin information
@@ -102,7 +101,7 @@ Faculty may NOT:
 - Access analytics
 - View confidential reports
 - Access another faculty member's leave
-- Access another student's personal information
+- Access another student's personal private information (like contact/billing details)
 
 --------------------------------------------------
 STUDENT
@@ -455,7 +454,7 @@ export const confirmPendingAction = async (
   }
 
   conversation.messages.push({ role: 'tool', tool_call_id: toolCallId, content: JSON.stringify(result) });
-  
+
   let maxLoops = 5;
   while (maxLoops-- > 0) {
     const tools = toOpenAITools(user.role);
