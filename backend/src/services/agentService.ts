@@ -302,84 +302,79 @@ export const chat = async (
 
   conversation.messages.push({ role: 'user', content: userMessage });
 
-  const tools = toOpenAITools(user.role);
+  let maxLoops = 5;
+  while (maxLoops-- > 0) {
+    const tools = toOpenAITools(user.role);
 
-  const response = await client.chat.completions.create({
-    model: MODEL,
-    messages: conversation.messages as any,
-    tools,
-  });
-
-  if (!response.choices || response.choices.length === 0) {
-    return { reply: 'The assistant is temporarily unavailable. Please try again.', pendingConfirmation: null, conversationId };
-  }
-  const choice = response.choices[0].message;
-  
-  if (choice.tool_calls) {
-    for (const tc of choice.tool_calls) {
-      if (tc.type === 'function' && !tc.function.arguments) {
-        tc.function.arguments = '{}';
-      }
-    }
-  }
-
-  conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
-
-  const toolCall = choice.tool_calls?.[0];
-
-  if (toolCall && toolCall.type === 'function') {
-    const toolName = toolCall.function.name;
-    const input = safeParseArguments(toolCall.function.arguments);
-    const toolDef = TOOLS.find((t) => t.name === toolName);
-
-    if (!toolDef) {
-      return {
-        reply: "I tried to use a tool that isn't available. Please rephrase your request.",
-        pendingConfirmation: null,
-        conversationId,
-      };
-    }
-
-    if (toolDef.destructive) {
-      conversation.pendingAction = { toolName, input, toolCallId: toolCall.id };
-      const proposedReply = choice.content || `I'd like to ${toolName.replace(/_/g, ' ')} with: ${JSON.stringify(input)}. Confirm to proceed?`;
-      console.log('RAW MODEL REPLY BEFORE SANITIZE:', proposedReply);
-      return {
-        reply: sanitizeReply(proposedReply),
-        pendingConfirmation: conversation.pendingAction,
-        conversationId,
-      };
-    }
-
-    let result: any;
-    try {
-      result = await executeTool(toolName, input, user);
-    } catch (err: any) {
-      result = { error: err.message };
-    }
-
-    conversation.messages.push({
-      role: 'tool',
-      tool_call_id: toolCall.id,
-      content: JSON.stringify(result),
-    });
-
-    const followUp = await client.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: MODEL,
       messages: conversation.messages as any,
       tools,
     });
 
-    if (!followUp.choices || followUp.choices.length === 0) {
-      return { reply: sanitizeReply(choice.content || 'Done, but I could not generate a summary.'), pendingConfirmation: null, conversationId };
+    if (!response.choices || response.choices.length === 0) {
+      return { reply: 'The assistant is temporarily unavailable. Please try again.', pendingConfirmation: null, conversationId };
     }
-    const followUpChoice = followUp.choices[0].message;
-    conversation.messages.push({ role: 'assistant', content: followUpChoice.content || '' });
+    const choice = response.choices[0].message;
+    
+    if (choice.tool_calls) {
+      for (const tc of choice.tool_calls) {
+        if (tc.type === 'function' && !tc.function.arguments) {
+          tc.function.arguments = '{}';
+        }
+      }
+    }
 
-    return { reply: sanitizeReply(followUpChoice.content || 'Done.'), pendingConfirmation: null, conversationId };
+    conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
+
+    const toolCall = choice.tool_calls?.[0];
+
+    if (toolCall && toolCall.type === 'function') {
+      const toolName = toolCall.function.name;
+      const input = safeParseArguments(toolCall.function.arguments);
+      const toolDef = TOOLS.find((t) => t.name === toolName);
+
+      if (!toolDef) {
+        return {
+          reply: "I tried to use a tool that isn't available. Please rephrase your request.",
+          pendingConfirmation: null,
+          conversationId,
+        };
+      }
+
+      if (toolDef.destructive) {
+        conversation.pendingAction = { toolName, input, toolCallId: toolCall.id };
+        const proposedReply = choice.content || `I'd like to ${toolName.replace(/_/g, ' ')} with: ${JSON.stringify(input)}. Confirm to proceed?`;
+        console.log('RAW MODEL REPLY BEFORE SANITIZE:', proposedReply);
+        return {
+          reply: sanitizeReply(proposedReply),
+          pendingConfirmation: conversation.pendingAction,
+          conversationId,
+        };
+      }
+
+      let result: any;
+      try {
+        result = await executeTool(toolName, input, user);
+      } catch (err: any) {
+        result = { error: err.message };
+      }
+
+      conversation.messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: JSON.stringify(result),
+      });
+
+      // Let the loop continue to process the tool result
+      continue;
+    }
+
+    // No tool calls, return the final response
+    return { reply: sanitizeReply(choice.content || 'Done.'), pendingConfirmation: null, conversationId };
   }
 
-  return { reply: sanitizeReply(choice.content || '...'), pendingConfirmation: null, conversationId };
+  return { reply: 'I had to stop because there were too many internal steps.', pendingConfirmation: null, conversationId };
 };
 
 export const confirmPendingAction = async (
@@ -413,20 +408,64 @@ export const confirmPendingAction = async (
   }
 
   conversation.messages.push({ role: 'tool', tool_call_id: toolCallId, content: JSON.stringify(result) });
-  const tools = toOpenAITools(user.role);
+  
+  let maxLoops = 5;
+  while (maxLoops-- > 0) {
+    const tools = toOpenAITools(user.role);
 
-  const followUp = await client.chat.completions.create({
-    model: MODEL,
-    messages: conversation.messages as any,
-    tools,
-  });
+    const followUp = await client.chat.completions.create({
+      model: MODEL,
+      messages: conversation.messages as any,
+      tools,
+    });
 
-  if (!followUp.choices || followUp.choices.length === 0) {
-    return { reply: 'Action completed, but I could not generate a summary.' };
+    if (!followUp.choices || followUp.choices.length === 0) {
+      return { reply: 'Action completed, but I could not generate a summary.' };
+    }
+
+    const choice = followUp.choices[0].message;
+
+    if (choice.tool_calls) {
+      for (const tc of choice.tool_calls) {
+        if (tc.type === 'function' && !tc.function.arguments) {
+          tc.function.arguments = '{}';
+        }
+      }
+    }
+
+    conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
+
+    const toolCall = choice.tool_calls?.[0];
+
+    if (toolCall && toolCall.type === 'function') {
+      const nextToolName = toolCall.function.name;
+      const nextInput = safeParseArguments(toolCall.function.arguments);
+      const nextToolDef = TOOLS.find((t) => t.name === nextToolName);
+
+      if (nextToolDef?.destructive) {
+        conversation.pendingAction = { toolName: nextToolName, input: nextInput, toolCallId: toolCall.id };
+        const proposedReply = choice.content || `I'd like to ${nextToolName.replace(/_/g, ' ')} with: ${JSON.stringify(nextInput)}. Confirm to proceed?`;
+        return { reply: sanitizeReply(proposedReply) };
+      }
+
+      let nextResult: any;
+      try {
+        nextResult = await executeTool(nextToolName, nextInput, user);
+      } catch (err: any) {
+        nextResult = { error: err.message };
+      }
+
+      conversation.messages.push({
+        role: 'tool',
+        tool_call_id: toolCall.id,
+        content: JSON.stringify(nextResult),
+      });
+
+      continue;
+    }
+
+    return { reply: sanitizeReply(choice.content || 'Done.') };
   }
 
-  const followUpChoice = followUp.choices[0].message;
-  conversation.messages.push({ role: 'assistant', content: followUpChoice.content || '' });
-
-  return { reply: sanitizeReply(followUpChoice.content || 'Done.') };
+  return { reply: 'Action completed. Max steps reached.' };
 };
