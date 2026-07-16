@@ -7,7 +7,7 @@ const client = new OpenAI({
   baseURL: 'https://api.groq.com/openai/v1',
 });
 
-const MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const MODEL = process.env.GROQ_MODEL || 'qwen-2.5-32b';
 
 interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
