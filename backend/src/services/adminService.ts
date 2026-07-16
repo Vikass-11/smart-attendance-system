@@ -1,6 +1,6 @@
 import * as adminModel from '../models/adminModel';
 import * as courseModel from '../models/courseModel';
-import type { DepartmentFilters, UserFilters } from '../models/adminModel';
+import type { DepartmentFilters, UserFilters, UserModelRow } from '../models/adminModel';
 
 export const isValidRole = (role: string): boolean => ['student', 'faculty', 'admin'].includes(role);
 
@@ -14,6 +14,11 @@ export const fetchDepartments = async (filters: DepartmentFilters) => {
 
 export const fetchUsers = async (filters: UserFilters) => {
   return adminModel.getAllUsers(filters);
+};
+
+/** Fetches a single user by ID (active users only). Returns null if not found. */
+export const getUserById = async (userId: number): Promise<UserModelRow | null> => {
+  return adminModel.getUserById(userId);
 };
 
 export const changeUserRole = async (userId: number, role: string, departmentId: number | null) => {

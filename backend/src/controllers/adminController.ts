@@ -83,33 +83,88 @@ export const listUsers = async (req: AuthenticatedRequest, res: Response, next: 
 export const updateUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   const { id } = req.params;
   const { role, departmentId } = req.body;
+  const actingUser = req.user!;
+  const targetId = Number(id);
 
   if (!adminService.isValidRole(role)) {
-    next(new AppError('Invalid role', 400, 'VALIDATION_ERROR'));
+    next(new AppError('Invalid role. Must be one of: student, faculty, admin', 400, 'VALIDATION_ERROR'));
+    return;
+  }
+
+  // Prevent admin from changing their own role
+  if (actingUser.id === targetId) {
+    next(new AppError('You cannot change your own role', 403, 'SELF_ROLE_CHANGE'));
     return;
   }
 
   try {
-    await adminService.changeUserRole(Number(id), role, departmentId || null);
+    // Fetch target user to check system-admin flag
+    const targetUser = await adminService.getUserById(targetId);
+
+    if (!targetUser) {
+      next(new AppError('User not found', 404, 'USER_NOT_FOUND'));
+      return;
+    }
+
+    // The first registered system admin cannot be demoted by anyone
+    if (targetUser.is_system_admin && role !== 'admin') {
+      next(new AppError(
+        'The system admin (first registered admin) cannot be demoted. This is a protected account.',
+        403,
+        'SYSTEM_ADMIN_PROTECTED'
+      ));
+      return;
+    }
+
+    await adminService.changeUserRole(targetId, role, departmentId || null);
+
     sendSuccess(res, {
-      message: 'User updated successfully',
-      data: { id: Number(id), role, departmentId: departmentId || null },
+      message: 'User role updated successfully',
+      data: { id: targetId, role, departmentId: departmentId || null },
     });
   } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+      return;
+    }
     next(new AppError('Failed to update user', 500, 'USER_UPDATE_FAILED'));
   }
 };
 
 export const removeUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   const { id } = req.params;
+  const actingUser = req.user!;
+  const targetId = Number(id);
+
+  // Prevent admin from deleting themselves
+  if (actingUser.id === targetId) {
+    next(new AppError('You cannot delete your own account', 403, 'SELF_DELETE'));
+    return;
+  }
 
   try {
-    await adminService.deactivateUser(Number(id));
+    // Prevent deletion of the system admin account
+    const targetUser = await adminService.getUserById(targetId);
+    if (!targetUser) {
+      next(new AppError('User not found', 404, 'USER_NOT_FOUND'));
+      return;
+    }
+
+    if (targetUser.is_system_admin) {
+      next(new AppError('The system admin account cannot be deleted', 403, 'SYSTEM_ADMIN_PROTECTED'));
+      return;
+    }
+
+    await adminService.deactivateUser(targetId);
     sendSuccess(res, {
       message: 'User deleted successfully',
-      data: { id: Number(id) },
+      data: { id: targetId },
     });
   } catch (error) {
+    if (error instanceof AppError) {
+      next(error);
+      return;
+    }
     next(new AppError('Failed to delete user', 500, 'USER_DELETE_FAILED'));
   }
 };

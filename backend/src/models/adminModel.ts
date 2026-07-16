@@ -20,6 +20,17 @@ export interface DepartmentFilters {
   sortOrder: 'asc' | 'desc';
 }
 
+export interface UserModelRow extends RowDataPacket {
+  id: number;
+  name: string;
+  email: string;
+  role: 'student' | 'faculty' | 'admin';
+  department: string | null;
+  is_system_admin: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export const createDepartment = async (name: string): Promise<ResultSetHeader> => {
   const [result] = await db.query<ResultSetHeader>(`INSERT INTO departments (name) VALUES (?)`, [name]);
   return result;
@@ -88,7 +99,7 @@ export const getAllUsers = async (
   );
 
   const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT u.id, u.name, u.email, u.role, u.created_at, d.name AS department
+    `SELECT u.id, u.name, u.email, u.role, u.is_system_admin, u.created_at, u.updated_at, d.name AS department
      FROM users u
      LEFT JOIN departments d ON u.department_id = d.id
      ${whereClause}
@@ -98,6 +109,18 @@ export const getAllUsers = async (
   );
 
   return { rows, total: Number(countRows[0].total) };
+};
+
+export const getUserById = async (userId: number): Promise<UserModelRow | null> => {
+  const [rows] = await db.query<UserModelRow[]>(
+    `SELECT u.id, u.name, u.email, u.role, u.is_system_admin, u.created_at, u.updated_at, d.name AS department
+     FROM users u
+     LEFT JOIN departments d ON u.department_id = d.id
+     WHERE u.id = ? AND u.is_active = TRUE
+     LIMIT 1`,
+    [userId]
+  );
+  return rows.length > 0 ? rows[0] : null;
 };
 
 export const updateUserRole = async (
