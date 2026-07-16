@@ -1,199 +1,113 @@
-import { db } from '../db/client';
-import { courses, courseEnrollments, timetableSlots } from '../db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import db from '../config/db';
+import { ResultSetHeader } from 'mysql2';
 
-export interface CreateCourseInput {
+export interface CourseData {
   name: string;
   code: string;
   departmentId: number;
   credits?: number;
   facultyId?: number | null;
-  maxStudents?: number | null;
-  semesterStart?: string | null;
-  semesterEnd?: string | null;
 }
 
-export const createCourse = async (input: CreateCourseInput) => {
-  const [result] = await db.insert(courses).values([{
-    name: input.name,
-    code: input.code,
-    departmentId: input.departmentId,
-    credits: input.credits ?? 3,
-    facultyId: input.facultyId ?? null,
-    maxStudents: input.maxStudents ?? null,
-    semesterStart: input.semesterStart ? new Date(input.semesterStart) : null,
-    semesterEnd: input.semesterEnd ? new Date(input.semesterEnd) : null,
-  }]);
+export const createCourse = async (data: CourseData): Promise<number> => {
+  const [result] = await db.query<ResultSetHeader>(
+    `INSERT INTO courses (name, code, department_id, credits, faculty_id) VALUES (?, ?, ?, ?, ?)`,
+    [data.name, data.code, data.departmentId, data.credits ?? 3, data.facultyId ?? null]
+  );
   return result.insertId;
 };
 
-export const getAllCourses = async () => {
-  return db.select().from(courses);
+export const getAllCourses = async (): Promise<any[]> => {
+  const [rows]: any = await db.query(
+    `SELECT c.id, c.name, c.code, c.credits, d.name as department, u.name as facultyName, c.department_id as departmentId, c.faculty_id as facultyId
+     FROM courses c
+     LEFT JOIN departments d ON c.department_id = d.id
+     LEFT JOIN users u ON c.faculty_id = u.id`
+  );
+  return rows;
 };
 
-export const getCourseById = async (id: number) => {
-  const result = await db.select().from(courses).where(eq(courses.id, id));
-  return result[0];
+export const getCourseById = async (id: number): Promise<any> => {
+  const [rows]: any = await db.query(
+    `SELECT c.id, c.name, c.code, c.credits, d.name as department, u.name as facultyName, c.department_id as departmentId, c.faculty_id as facultyId
+     FROM courses c
+     LEFT JOIN departments d ON c.department_id = d.id
+     LEFT JOIN users u ON c.faculty_id = u.id
+     WHERE c.id = ?`,
+    [id]
+  );
+  return rows[0] || null;
 };
 
-export const getCoursesByFaculty = async (facultyId: number) => {
-  return db.select().from(courses).where(eq(courses.facultyId, facultyId));
+export const getCoursesByFacultyId = async (facultyId: number): Promise<any[]> => {
+  const [rows]: any = await db.query(
+    `SELECT c.id, c.name, c.code, c.credits, d.name as department 
+     FROM courses c
+     LEFT JOIN departments d ON c.department_id = d.id
+     WHERE c.faculty_id = ?`,
+    [facultyId]
+  );
+  return rows;
 };
 
-export const getCoursesByDepartment = async (departmentId: number) => {
-  return db.select().from(courses).where(eq(courses.departmentId, departmentId));
+export const getCoursesByStudentId = async (studentId: number): Promise<any[]> => {
+  const [rows]: any = await db.query(
+    `SELECT c.id, c.name, c.code, c.credits, d.name as department, u.name as facultyName
+     FROM course_enrollments ce
+     JOIN courses c ON ce.course_id = c.id
+     LEFT JOIN departments d ON c.department_id = d.id
+     LEFT JOIN users u ON c.faculty_id = u.id
+     WHERE ce.student_id = ?`,
+    [studentId]
+  );
+  return rows;
 };
 
-export const updateCourse = async (id: number, input: Partial<CreateCourseInput>) => {
-  const updateData: any = { ...input };
-  if (input.semesterStart) {
-    updateData.semesterStart = new Date(input.semesterStart);
-  }
-  if (input.semesterEnd) {
-    updateData.semesterEnd = new Date(input.semesterEnd);
-  }
-  await db.update(courses).set(updateData).where(eq(courses.id, id));
-};
+export const updateCourseDetails = async (id: number, data: Partial<CourseData>): Promise<void> => {
+  const updates: string[] = [];
+  const params: any[] = [];
 
-export const unassignFacultyFromCourse = async (courseId: number) => {
-  await db.update(courses).set({ facultyId: null }).where(eq(courses.id, courseId));
-};
-
-export const deleteCourse = async (id: number) => {
-  await db.delete(courseEnrollments).where(eq(courseEnrollments.courseId, id));
-  await db.delete(timetableSlots).where(eq(timetableSlots.courseId, id));
-  await db.delete(courses).where(eq(courses.id, id));
-};
-
-// Enrollments
-
-export const enrollStudent = async (courseId: number, studentId: number) => {
-  const [result] = await db.insert(courseEnrollments).values({ courseId, studentId });
-  return result.insertId;
-};
-
-export const getEnrolledStudents = async (courseId: number) => {
-  return db.select().from(courseEnrollments).where(eq(courseEnrollments.courseId, courseId));
-};
-
-export const getStudentCourses = async (studentId: number) => {
-  return db
-    .select({
-      courseId: courses.id,
-      name: courses.name,
-      code: courses.code,
-      credits: courses.credits,
-    })
-    .from(courseEnrollments)
-    .innerJoin(courses, eq(courseEnrollments.courseId, courses.id))
-    .where(eq(courseEnrollments.studentId, studentId));
-};
-
-export const unenrollStudent = async (courseId: number, studentId: number) => {
-  await db
-    .delete(courseEnrollments)
-    .where(and(eq(courseEnrollments.courseId, courseId), eq(courseEnrollments.studentId, studentId)));
-};
-
-export const getStudentDepartment = async (studentId: number): Promise<number | null> => {
-  const result: any = await db.execute(sql`SELECT department_id FROM users WHERE id = ${studentId}`);
-  const rows = result[0];
-  return rows[0]?.department_id ?? null;
-};
-
-// Timetable
-
-export interface CreateTimetableSlotInput {
-  courseId: number;
-  dayOfWeek: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
-  startTime: string;
-  endTime: string;
-  room?: string;
-}
-
-export const createTimetableSlot = async (input: CreateTimetableSlotInput) => {
-  const [result] = await db.insert(timetableSlots).values(input);
-  return result.insertId;
-};
-
-export const getTimetableForCourse = async (courseId: number) => {
-  return db.select().from(timetableSlots).where(eq(timetableSlots.courseId, courseId));
-};
-
-export const getStudentTimetable = async (studentId: number) => {
-  return db
-    .select({
-      courseId: courses.id,
-      courseName: courses.name,
-      courseCode: courses.code,
-      dayOfWeek: timetableSlots.dayOfWeek,
-      startTime: timetableSlots.startTime,
-      endTime: timetableSlots.endTime,
-      room: timetableSlots.room,
-    })
-    .from(courseEnrollments)
-    .innerJoin(courses, eq(courseEnrollments.courseId, courses.id))
-    .innerJoin(timetableSlots, eq(timetableSlots.courseId, courses.id))
-    .where(eq(courseEnrollments.studentId, studentId));
-};
-
-export const getFacultyTimetable = async (facultyId: number) => {
-  return db
-    .select({
-      courseId: courses.id,
-      courseName: courses.name,
-      courseCode: courses.code,
-      dayOfWeek: timetableSlots.dayOfWeek,
-      startTime: timetableSlots.startTime,
-      endTime: timetableSlots.endTime,
-      room: timetableSlots.room,
-    })
-    .from(courses)
-    .innerJoin(timetableSlots, eq(timetableSlots.courseId, courses.id))
-    .where(eq(courses.facultyId, facultyId));
-};
-
-export const deleteTimetableSlot = async (id: number) => {
-  await db.delete(timetableSlots).where(eq(timetableSlots.id, id));
-};
-
-export const findOverlappingSlots = async (
-  facultyId: number | null,
-  dayOfWeek: string,
-  startTime: string,
-  endTime: string,
-  excludeSlotId?: number
-) => {
-  if (!facultyId) return [];
-
-  const facultyCourseRows = await db.select().from(courses).where(eq(courses.facultyId, facultyId));
-  const facultyCourseIds = facultyCourseRows.map((c) => c.id);
-
-  if (facultyCourseIds.length === 0) return [];
-
-  const allSlots = await db.select().from(timetableSlots).where(eq(timetableSlots.dayOfWeek, dayOfWeek as any));
-
-  return allSlots.filter((slot) => {
-    if (excludeSlotId && slot.id === excludeSlotId) return false;
-    if (!facultyCourseIds.includes(slot.courseId)) return false;
-    return startTime < slot.endTime && endTime > slot.startTime;
+  Object.entries(data).forEach(([key, value]) => {
+    const columnMap: Record<string, string> = {
+      name: 'name',
+      code: 'code',
+      departmentId: 'department_id',
+      credits: 'credits',
+      facultyId: 'faculty_id',
+    };
+    const colName = columnMap[key];
+    if (colName) {
+      updates.push(`${colName} = ?`);
+      params.push(value);
+    }
   });
+
+  if (updates.length === 0) return;
+
+  params.push(id);
+  await db.query(`UPDATE courses SET ${updates.join(', ')} WHERE id = ?`, params);
 };
 
-export const findRoomConflicts = async (
-  room: string | undefined,
-  dayOfWeek: string,
-  startTime: string,
-  endTime: string,
-  excludeSlotId?: number
-) => {
-  if (!room) return [];
+export const deleteCourseById = async (id: number): Promise<void> => {
+  await db.query('DELETE FROM courses WHERE id = ?', [id]);
+};
 
-  const allSlots = await db.select().from(timetableSlots).where(eq(timetableSlots.dayOfWeek, dayOfWeek as any));
+export const enrollStudent = async (courseId: number, studentId: number): Promise<void> => {
+  await db.query(`INSERT INTO course_enrollments (course_id, student_id) VALUES (?, ?)`, [courseId, studentId]);
+};
 
-  return allSlots.filter((slot) => {
-    if (excludeSlotId && slot.id === excludeSlotId) return false;
-    if (slot.room !== room) return false;
-    return startTime < slot.endTime && endTime > slot.startTime;
-  });
+export const getEnrolledStudentsByCourseId = async (courseId: number): Promise<any[]> => {
+  const [rows]: any = await db.query(
+    `SELECT u.id, u.name, u.email, d.name as department
+     FROM course_enrollments ce
+     JOIN users u ON ce.student_id = u.id
+     LEFT JOIN departments d ON u.department_id = d.id
+     WHERE ce.course_id = ?`,
+    [courseId]
+  );
+  return rows;
+};
+
+export const unenrollStudentFromCourseId = async (courseId: number, studentId: number): Promise<void> => {
+  await db.query(`DELETE FROM course_enrollments WHERE course_id = ? AND student_id = ?`, [courseId, studentId]);
 };

@@ -1,18 +1,16 @@
-import jwt, { type SignOptions } from 'jsonwebtoken';
-import type { AppUser } from '../types';
+import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_key';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
 
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET is not configured');
-}
-
-export const createAccessToken = (user: AppUser): string => {
-  return jwt.sign(user, JWT_SECRET, {
-    expiresIn: (process.env.JWT_EXPIRES_IN ?? '1d') as SignOptions['expiresIn'],
-  });
+export const createAccessToken = (user: any): string => {
+  return jwt.sign(
+    { id: user.id, name: user.name, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
 };
 
-export const verifyAccessToken = (token: string): AppUser => {
-  return jwt.verify(token, JWT_SECRET) as AppUser;
+export const verifyAccessToken = (token: string): any => {
+  return jwt.verify(token, JWT_SECRET);
 };

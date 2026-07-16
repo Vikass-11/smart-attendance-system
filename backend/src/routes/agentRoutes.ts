@@ -1,10 +1,11 @@
-import express from 'express';
-import { verifyToken, requireRole } from '../middleware/auth';
+import { Router } from 'express';
+import { verifyToken } from '../middleware/auth';
 import { chatWithAgent, confirmAction } from '../controllers/agentController';
 
-const router = express.Router();
+const router = Router();
 
-router.use(verifyToken, requireRole('student', 'faculty', 'admin'));
+router.use(verifyToken);
+
 router.post('/chat', chatWithAgent);
 router.post('/confirm', confirmAction);
 

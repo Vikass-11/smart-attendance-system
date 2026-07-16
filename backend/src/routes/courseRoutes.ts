@@ -1,20 +1,30 @@
-import express from 'express';
+import { Router } from 'express';
 import { verifyToken, requireRole } from '../middleware/auth';
-import * as courseController from '../controllers/courseController';
+import {
+  createCourse,
+  listCourses,
+  getCourse,
+  getMyCourses,
+  updateCourse,
+  deleteCourse,
+  enrollStudent,
+  getEnrolledStudents,
+  unenrollStudent,
+} from '../controllers/courseController';
 
-const router = express.Router();
+const router = Router();
 
 router.use(verifyToken);
 
-router.get('/my-courses', requireRole('faculty', 'student'), courseController.getMyCourses);
-router.get('/', requireRole('admin', 'faculty'), courseController.listCourses);
-router.get('/:id', requireRole('admin', 'faculty', 'student'), courseController.getCourse);
-router.post('/', requireRole('admin'), courseController.createCourse);
-router.patch('/:id', requireRole('admin'), courseController.updateCourse);
-router.delete('/:id', requireRole('admin'), courseController.deleteCourse);
+router.post('/', requireRole('admin'), createCourse);
+router.get('/', listCourses);
+router.get('/my', getMyCourses);
+router.get('/:id', getCourse);
+router.put('/:id', requireRole('admin'), updateCourse);
+router.delete('/:id', requireRole('admin'), deleteCourse);
 
-router.post('/:id/enroll', requireRole('admin'), courseController.enrollStudent);
-router.get('/:id/students', requireRole('admin', 'faculty'), courseController.getEnrolledStudents);
-router.delete('/:id/students/:studentId', requireRole('admin'), courseController.unenrollStudent);
+router.post('/:id/enroll', requireRole('admin', 'faculty'), enrollStudent);
+router.get('/:id/students', getEnrolledStudents);
+router.delete('/:id/students/:studentId', requireRole('admin', 'faculty'), unenrollStudent);
 
 export default router;

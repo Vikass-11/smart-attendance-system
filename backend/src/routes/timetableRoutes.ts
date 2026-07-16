@@ -1,14 +1,19 @@
-import express from 'express';
+import { Router } from 'express';
 import { verifyToken, requireRole } from '../middleware/auth';
-import * as timetableController from '../controllers/timetableController';
+import {
+  createSlot,
+  getCourseTimetable,
+  getMyTimetable,
+  deleteSlot,
+} from '../controllers/timetableController';
 
-const router = express.Router();
+const router = Router();
 
 router.use(verifyToken);
 
-router.get('/my-timetable', requireRole('faculty', 'student'), timetableController.getMyTimetable);
-router.get('/course/:courseId', requireRole('admin', 'faculty', 'student'), timetableController.getCourseTimetable);
-router.post('/', requireRole('admin'), timetableController.createSlot);
-router.delete('/:id', requireRole('admin'), timetableController.deleteSlot);
+router.post('/', requireRole('admin'), createSlot);
+router.get('/my', getMyTimetable);
+router.get('/course/:courseId', getCourseTimetable);
+router.delete('/:id', requireRole('admin'), deleteSlot);
 
 export default router;

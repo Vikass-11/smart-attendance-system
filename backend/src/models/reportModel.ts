@@ -1,110 +1,118 @@
 import db from '../config/db';
-import { RowDataPacket } from 'mysql2';
 
 export interface DepartmentReportFilters {
   search?: string;
   page: number;
   limit: number;
   offset: number;
-  sortBy: 'department' | 'percentage' | 'totalStudents';
+  sortBy: 'department' | 'attendanceRate';
   sortOrder: 'asc' | 'desc';
 }
 
-export const getDailyReport = async (date: string): Promise<RowDataPacket[]> => {
-  const [rows] = await db.query<RowDataPacket[]>(
-    `SELECT u.id AS student_id, u.name, u.email, a.status
+export const getDailyReportData = async (date: string): Promise<any[]> => {
+  const [rows]: any = await db.query(
+    `SELECT u.id as student_id, u.name, u.email, d.name as department, COALESCE(a.status, 'absent') as status
      FROM users u
+     LEFT JOIN departments d ON u.department_id = d.id
      LEFT JOIN attendance a ON u.id = a.student_id AND a.date = ?
-     WHERE u.role = 'student' AND u.is_active = TRUE
-     ORDER BY u.name`,
+     WHERE u.role = 'student' AND u.is_active = 1`,
     [date]
   );
   return rows;
 };
 
-export const getRangeReport = async (fromDate: string, toDate: string): Promise<RowDataPacket[]> => {
-  const [rows] = await db.execute<RowDataPacket[]>(
-    `SELECT u.id AS student_id, u.name, u.email,
-            COUNT(a.id) AS total_days,
-            SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS present_days,
-            SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) AS absent_days,
-            SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END) AS late_days,
-            ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / NULLIF(COUNT(a.id), 0)) * 100, 2) AS percentage
+export const getRangeReportData = async (fromDate: string, toDate: string): Promise<any[]> => {
+  const [rows]: any = await db.query(
+    `SELECT u.id, u.name, u.email, d.name as department,
+       COALESCE(SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END), 0) as present_days,
+       COALESCE(SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END), 0) as absent_days,
+       COALESCE(SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END), 0) as late_days,
+       COUNT(a.id) as total_days
      FROM users u
+     LEFT JOIN departments d ON u.department_id = d.id
      LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
-     WHERE u.role = 'student' AND u.is_active = TRUE
-     GROUP BY u.id
-     ORDER BY u.name`,
+     WHERE u.role = 'student' AND u.is_active = 1
+     GROUP BY u.id, u.name, u.email, d.name`,
     [fromDate, toDate]
   );
-  return rows;
+
+  return rows.map((row: any) => {
+    const present = Number(row.present_days);
+    const absent = Number(row.absent_days);
+    const late = Number(row.late_days);
+    const total = Number(row.total_days);
+    const effectivePresent = present + (late * 0.5);
+    const percentage = total > 0 ? Math.round((effectivePresent / total) * 100) : 100;
+    return { ...row, percentage };
+  });
 };
 
-export const getInstitutionSummary = async (fromDate: string, toDate: string): Promise<RowDataPacket> => {
-  const [rows] = await db.execute<RowDataPacket[]>(
-    `SELECT
-        COUNT(DISTINCT u.id) AS total_students,
-        COUNT(a.id) AS total_records,
-        SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) AS total_present,
-        SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) AS total_absent,
-        SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END) AS total_late,
-        ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / NULLIF(COUNT(a.id), 0)) * 100, 2) AS overall_percentage
+export const getInstitutionSummaryData = async (fromDate: string, toDate: string, filters: DepartmentReportFilters): Promise<any> => {
+  const [overallRows]: any = await db.query(
+    `SELECT 
+       COUNT(DISTINCT u.id) as totalStudents,
+       COALESCE(SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END), 0) as presentCount,
+       COALESCE(SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END), 0) as absentCount,
+       COALESCE(SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END), 0) as lateCount
      FROM users u
      LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
-     WHERE u.role = 'student' AND u.is_active = TRUE`,
+     WHERE u.role = 'student' AND u.is_active = 1`,
     [fromDate, toDate]
   );
-  return rows[0];
-};
+  
+  const overall = overallRows[0] || { totalStudents: 0, presentCount: 0, absentCount: 0, lateCount: 0 };
+  const oPresent = Number(overall.presentCount);
+  const oAbsent = Number(overall.absentCount);
+  const oLate = Number(overall.lateCount);
+  const oTotal = oPresent + oAbsent + oLate;
+  const overallAttendanceRate = oTotal > 0 ? Math.round(((oPresent + oLate * 0.5) / oTotal) * 100) : 0;
 
-export const getDepartmentWiseReport = async (
-  fromDate: string,
-  toDate: string,
-  filters: DepartmentReportFilters
-): Promise<{ rows: RowDataPacket[]; total: number }> => {
-  const sortColumnMap: Record<DepartmentReportFilters['sortBy'], string> = {
-    department: 'department',
-    percentage: 'percentage',
-    totalStudents: 'total_students',
-  };
-
-  const whereClause = filters.search
-    ? `WHERE department_summary.department LIKE ?`
-    : '';
-  const params: Array<string | number> = [fromDate, toDate];
+  let breakdownQuery = `
+    SELECT d.name as department,
+       COUNT(DISTINCT u.id) as studentCount,
+       COALESCE(SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END), 0) as presentCount,
+       COALESCE(SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END), 0) as absentCount,
+       COALESCE(SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END), 0) as lateCount
+    FROM departments d
+    JOIN users u ON d.id = u.department_id
+    LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
+    WHERE u.role = 'student' AND u.is_active = 1
+  `;
+  const params: any[] = [fromDate, toDate];
 
   if (filters.search) {
+    breakdownQuery += ' AND d.name LIKE ?';
     params.push(`%${filters.search}%`);
   }
 
-  const baseQuery = `
-    SELECT department_summary.department,
-           department_summary.total_students,
-           department_summary.percentage
-    FROM (
-      SELECT COALESCE(d.name, 'Unassigned') AS department,
-             COUNT(DISTINCT u.id) AS total_students,
-             ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / NULLIF(COUNT(a.id), 0)) * 100, 2) AS percentage
-      FROM users u
-      LEFT JOIN departments d ON u.department_id = d.id
-      LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
-      WHERE u.role = 'student' AND u.is_active = TRUE
-      GROUP BY COALESCE(d.name, 'Unassigned')
-    ) AS department_summary
-  `;
+  breakdownQuery += ' GROUP BY d.id, d.name';
 
-  const [countRows] = await db.query<RowDataPacket[]>(
-    `SELECT COUNT(*) AS total FROM (${baseQuery} ${whereClause}) AS countable_departments`,
-    params
-  );
+  const [bdRows]: any = await db.query(breakdownQuery, params);
 
-  const [rows] = await db.query<RowDataPacket[]>(
-    `${baseQuery}
-     ${whereClause}
-     ORDER BY ${sortColumnMap[filters.sortBy]} ${filters.sortOrder.toUpperCase()}
-     LIMIT ? OFFSET ?`,
-    [...params, filters.limit, filters.offset]
-  );
+  const formattedBD = bdRows.map((row: any) => {
+    const present = Number(row.presentCount);
+    const absent = Number(row.absentCount);
+    const late = Number(row.lateCount);
+    const total = present + absent + late;
+    const attendanceRate = total > 0 ? Math.round(((present + late * 0.5) / total) * 100) : 0;
+    return { department: row.department, studentCount: row.studentCount, attendanceRate };
+  });
 
-  return { rows, total: Number(countRows[0].total) };
+  if (filters.sortBy === 'attendanceRate') {
+    formattedBD.sort((a: any, b: any) => filters.sortOrder === 'desc' ? b.attendanceRate - a.attendanceRate : a.attendanceRate - b.attendanceRate);
+  } else {
+    formattedBD.sort((a: any, b: any) => {
+      const comp = a.department.localeCompare(b.department);
+      return filters.sortOrder === 'desc' ? -comp : comp;
+    });
+  }
+
+  const totalBreakdownCount = formattedBD.length;
+  const paginatedBD = formattedBD.slice(filters.offset, filters.offset + filters.limit);
+
+  return {
+    summary: { totalStudents: overall.totalStudents, overallAttendanceRate },
+    departmentBreakdown: paginatedBD,
+    departmentBreakdownMeta: { total: totalBreakdownCount, page: filters.page, limit: filters.limit }
+  };
 };

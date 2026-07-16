@@ -1,58 +1,12 @@
 import * as courseModel from '../models/courseModel';
-import type { CreateCourseInput } from '../models/courseModel';
 
-export const createNewCourse = async (input: CreateCourseInput) => {
-  return courseModel.createCourse(input);
-};
-
-export const fetchAllCourses = async () => {
-  return courseModel.getAllCourses();
-};
-
-export const fetchCourseById = async (id: number) => {
-  return courseModel.getCourseById(id);
-};
-
-export const fetchCoursesByFaculty = async (facultyId: number) => {
-  return courseModel.getCoursesByFaculty(facultyId);
-};
-
-export const fetchCoursesByDepartment = async (departmentId: number) => {
-  return courseModel.getCoursesByDepartment(departmentId);
-};
-
-export const updateExistingCourse = async (id: number, input: Partial<CreateCourseInput>) => {
-  return courseModel.updateCourse(id, input);
-};
-
-export const removeCourse = async (id: number) => {
-  return courseModel.deleteCourse(id);
-};
-
-export const enrollStudentInCourse = async (courseId: number, studentId: number) => {
-  const course = await courseModel.getCourseById(courseId);
-  if (!course) {
-    throw new Error('Course not found');
-  }
-
-  if (course.maxStudents) {
-    const currentCount = (await courseModel.getEnrolledStudents(courseId)).length;
-    if (currentCount >= course.maxStudents) {
-      throw new Error(`Course is full (max ${course.maxStudents} students)`);
-    }
-  }
-
-  return courseModel.enrollStudent(courseId, studentId);
-};
-
-export const fetchEnrolledStudents = async (courseId: number) => {
-  return courseModel.getEnrolledStudents(courseId);
-};
-
-export const fetchStudentCourses = async (studentId: number) => {
-  return courseModel.getStudentCourses(studentId);
-};
-
-export const unenrollStudentFromCourse = async (courseId: number, studentId: number) => {
-  return courseModel.unenrollStudent(courseId, studentId);
-};
+export const createNewCourse = async (data: courseModel.CourseData) => courseModel.createCourse(data);
+export const fetchAllCourses = async () => courseModel.getAllCourses();
+export const fetchCourseById = async (id: number) => courseModel.getCourseById(id);
+export const fetchCoursesByFaculty = async (facultyId: number) => courseModel.getCoursesByFacultyId(facultyId);
+export const fetchStudentCourses = async (studentId: number) => courseModel.getCoursesByStudentId(studentId);
+export const updateExistingCourse = async (id: number, data: Partial<courseModel.CourseData>) => courseModel.updateCourseDetails(id, data);
+export const removeCourse = async (id: number) => courseModel.deleteCourseById(id);
+export const enrollStudentInCourse = async (courseId: number, studentId: number) => courseModel.enrollStudent(courseId, studentId);
+export const fetchEnrolledStudents = async (courseId: number) => courseModel.getEnrolledStudentsByCourseId(courseId);
+export const unenrollStudentFromCourse = async (courseId: number, studentId: number) => courseModel.unenrollStudentFromCourseId(courseId, studentId);
