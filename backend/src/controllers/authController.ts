@@ -5,6 +5,26 @@ import { AuthenticatedRequest } from '../types';
 import { AppError } from '../middleware/errorHandler';
 import { sendSuccess } from '../utils/apiResponse';
 
+/**
+ * Public endpoint — returns whether a system admin already exists.
+ * The frontend uses this to conditionally show the "Admin" role option on the Register page.
+ */
+export const checkAdminExists = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const exists = await authService.adminExists();
+    sendSuccess(res, {
+      message: 'Admin status fetched',
+      data: { adminExists: exists },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const registerUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { name, email, password, role, departmentId } = req.body as {
     name?: string;
@@ -19,8 +39,15 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
     return;
   }
 
-  if (!authService.isValidRole(role)) {
-    next(new AppError('Invalid role', 400, 'VALIDATION_ERROR'));
+  // Only 'student' and 'admin' are allowed at registration — 'faculty' is assigned by admins only
+  if (!authService.isValidRegistrationRole(role)) {
+    next(new AppError(
+      role === 'faculty'
+        ? 'Faculty role cannot be self-assigned. It must be granted by an admin.'
+        : 'Invalid role. Choose either "student" or "admin".',
+      400,
+      'VALIDATION_ERROR'
+    ));
     return;
   }
 
@@ -49,9 +76,23 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
       data: { user },
     });
   } catch (error) {
-    if (error instanceof Error && error.message === 'User already exists') {
-      next(new AppError(error.message, 409, 'DUPLICATE_RESOURCE'));
-      return;
+    if (error instanceof Error) {
+      if (error.message === 'User already exists') {
+        next(new AppError(error.message, 409, 'DUPLICATE_RESOURCE'));
+        return;
+      }
+      if (error.message === 'AdminAlreadyExists') {
+        next(new AppError(
+          'An admin already exists. You cannot register as admin. Contact your system administrator.',
+          409,
+          'ADMIN_ALREADY_EXISTS'
+        ));
+        return;
+      }
+      if (error.message === 'InvalidRegistrationRole') {
+        next(new AppError('Invalid role for registration', 400, 'VALIDATION_ERROR'));
+        return;
+      }
     }
     console.error('Registration error:', error);
     next(error);
