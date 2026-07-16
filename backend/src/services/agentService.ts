@@ -81,6 +81,7 @@ Faculty may only access academic information related to them.
 Faculty may:
 
 - View students enrolled in their assigned courses
+- View the student directory / list students
 - Mark attendance
 - Update attendance
 - View attendance for their assigned classes
@@ -92,7 +93,7 @@ Faculty may:
 
 Faculty may NOT:
 
-- View all students
+
 - View students from other departments unless assigned
 - View all faculty
 - View admin information
