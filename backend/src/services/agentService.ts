@@ -327,25 +327,59 @@ export const chat = async (
 
     conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
 
-    const toolCall = choice.tool_calls?.[0];
+    if (choice.tool_calls && choice.tool_calls.length > 0) {
+      let pendingDestructive: any = null;
+      let hasError = false;
 
-    if (toolCall && toolCall.type === 'function') {
-      const toolName = toolCall.function.name;
-      const input = safeParseArguments(toolCall.function.arguments);
-      const toolDef = TOOLS.find((t) => t.name === toolName);
+      for (const toolCall of choice.tool_calls) {
+        if (toolCall.type !== 'function') continue;
 
-      if (!toolDef) {
-        return {
-          reply: "I tried to use a tool that isn't available. Please rephrase your request.",
-          pendingConfirmation: null,
-          conversationId,
-        };
+        const toolName = toolCall.function.name;
+        const input = safeParseArguments(toolCall.function.arguments);
+        const toolDef = TOOLS.find((t) => t.name === toolName);
+
+        if (!toolDef) {
+          conversation.messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ error: `Tool ${toolName} not found` }),
+          });
+          continue;
+        }
+
+        if (toolDef.destructive) {
+          if (pendingDestructive) {
+            // We already have a destructive action pending in this batch.
+            // Tell the model we can only confirm one destructive action at a time.
+            conversation.messages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ error: 'Cannot process multiple destructive tools at once. Please use bulk tools if available or do them sequentially.' }),
+            });
+            hasError = true;
+          } else {
+            pendingDestructive = { toolName, input, toolCallId: toolCall.id };
+          }
+          continue; // Do not execute destructive tools here
+        }
+
+        let result: any;
+        try {
+          result = await executeTool(toolName, input, user);
+        } catch (err: any) {
+          result = { error: err.message };
+        }
+
+        conversation.messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        });
       }
 
-      if (toolDef.destructive) {
-        conversation.pendingAction = { toolName, input, toolCallId: toolCall.id };
-        const proposedReply = choice.content || `I'd like to ${toolName.replace(/_/g, ' ')} with: ${JSON.stringify(input)}. Confirm to proceed?`;
-        console.log('RAW MODEL REPLY BEFORE SANITIZE:', proposedReply);
+      if (pendingDestructive) {
+        conversation.pendingAction = pendingDestructive;
+        const proposedReply = choice.content || `I'd like to ${pendingDestructive.toolName.replace(/_/g, ' ')} with: ${JSON.stringify(pendingDestructive.input)}. Confirm to proceed?`;
         return {
           reply: sanitizeReply(proposedReply),
           pendingConfirmation: conversation.pendingAction,
@@ -353,20 +387,7 @@ export const chat = async (
         };
       }
 
-      let result: any;
-      try {
-        result = await executeTool(toolName, input, user);
-      } catch (err: any) {
-        result = { error: err.message };
-      }
-
-      conversation.messages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify(result),
-      });
-
-      // Let the loop continue to process the tool result
+      // If we had multiple destructive tools, we pushed an error tool message. We should continue the loop so the model can read the error.
       continue;
     }
 
@@ -435,31 +456,59 @@ export const confirmPendingAction = async (
 
     conversation.messages.push({ role: 'assistant', content: choice.content || '', tool_calls: choice.tool_calls });
 
-    const toolCall = choice.tool_calls?.[0];
+    if (choice.tool_calls && choice.tool_calls.length > 0) {
+      let pendingDestructive: any = null;
+      let hasError = false;
 
-    if (toolCall && toolCall.type === 'function') {
-      const nextToolName = toolCall.function.name;
-      const nextInput = safeParseArguments(toolCall.function.arguments);
-      const nextToolDef = TOOLS.find((t) => t.name === nextToolName);
+      for (const toolCall of choice.tool_calls) {
+        if (toolCall.type !== 'function') continue;
 
-      if (nextToolDef?.destructive) {
-        conversation.pendingAction = { toolName: nextToolName, input: nextInput, toolCallId: toolCall.id };
-        const proposedReply = choice.content || `I'd like to ${nextToolName.replace(/_/g, ' ')} with: ${JSON.stringify(nextInput)}. Confirm to proceed?`;
+        const nextToolName = toolCall.function.name;
+        const nextInput = safeParseArguments(toolCall.function.arguments);
+        const nextToolDef = TOOLS.find((t) => t.name === nextToolName);
+
+        if (!nextToolDef) {
+          conversation.messages.push({
+            role: 'tool',
+            tool_call_id: toolCall.id,
+            content: JSON.stringify({ error: `Tool ${nextToolName} not found` }),
+          });
+          continue;
+        }
+
+        if (nextToolDef.destructive) {
+          if (pendingDestructive) {
+            conversation.messages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ error: 'Cannot process multiple destructive tools at once. Please use bulk tools if available or do them sequentially.' }),
+            });
+            hasError = true;
+          } else {
+            pendingDestructive = { toolName: nextToolName, input: nextInput, toolCallId: toolCall.id };
+          }
+          continue;
+        }
+
+        let nextResult: any;
+        try {
+          nextResult = await executeTool(nextToolName, nextInput, user);
+        } catch (err: any) {
+          nextResult = { error: err.message };
+        }
+
+        conversation.messages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(nextResult),
+        });
+      }
+
+      if (pendingDestructive) {
+        conversation.pendingAction = pendingDestructive;
+        const proposedReply = choice.content || `I'd like to ${pendingDestructive.toolName.replace(/_/g, ' ')} with: ${JSON.stringify(pendingDestructive.input)}. Confirm to proceed?`;
         return { reply: sanitizeReply(proposedReply) };
       }
-
-      let nextResult: any;
-      try {
-        nextResult = await executeTool(nextToolName, nextInput, user);
-      } catch (err: any) {
-        nextResult = { error: err.message };
-      }
-
-      conversation.messages.push({
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify(nextResult),
-      });
 
       continue;
     }
