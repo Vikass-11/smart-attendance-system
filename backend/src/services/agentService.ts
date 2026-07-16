@@ -3,20 +3,41 @@ import { agentTools } from './agentTools';
 import * as attendanceService from './attendanceService';
 import * as timetableService from './timetableService';
 import * as courseService from './courseService';
-import * as leaveService from './leaveService';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || '',
-});
 
 // Conversations mapping stateful session memory
 const conversations = new Map<string, any[]>();
 
-// Store for actions pending human-in-the-loop confirmation
-export const pendingActions = new Map<string, { type: string; args: any }>();
+// --- LAZY-LOADED OPENAI CLIENT ---
+let openaiInstance: OpenAI | null = null;
+
+const getOpenAIClient = (): OpenAI => {
+  if (!openaiInstance) {
+    const apiKey = process.env.QWEN_API_KEY || process.env.OPENAI_API_KEY;
+    const baseURL = process.env.QWEN_BASE_URL || 'https://openrouter.ai/api/v1';
+
+    if (!apiKey) {
+      throw new Error(
+        'Missing API credentials. Please set QWEN_API_KEY or OPENAI_API_KEY in your .env file.'
+      );
+    }
+
+    openaiInstance = new OpenAI({
+      apiKey,
+      baseURL,
+      defaultHeaders: {
+        'HTTP-Referer': 'http://localhost:3000',
+        'X-Title': 'Smart Attendance Agent',
+      }
+    });
+  }
+  return openaiInstance;
+};
+
+const QWEN_MODEL = 'qwen/qwen3.6-plus'; 
 
 export const chat = async (conversationId: string, message: string, user: any): Promise<any> => {
-  // Initialize context-aware system prompt injects logged-in user context
+  const openai = getOpenAIClient();
+
   if (!conversations.has(conversationId)) {
     const systemPrompt = `You are a helpful and intelligent AI Assistant for the Smart Attendance System.
 Current User Context:
@@ -24,14 +45,12 @@ Current User Context:
 - Name: ${user.name}
 - Email: ${user.email}
 - Role: ${user.role}
-- Department ID: ${user.departmentId || 'None'}
 
 Your behavior rules:
-- Assist the user with their queries regarding attendance, courses, timetable, and leave.
-- Students can only view their own attendance, percentage, courses, timetable, and submit leave requests.
-- Faculty and Admin users can check daily class attendance lists, check students with low attendance, review leave requests, and mark student attendance.
-- Strictly block students from executing admin/faculty functions. If attempted, reply politely explaining lack of permission.
-- If a tool requires user confirmation (submit_leave_request, review_leave_request, mark_student_attendance), draft the action and inform the user. Do NOT call database functions directly within the drafted tool step; the system intercepts it for confirmation.`;
+- Assist the user with their queries regarding attendance, courses, and timetable.
+- Students can only view their own attendance, percentage, courses, and timetable.
+- Faculty and Admin users are fully authorized to check daily class attendance lists and view low attendance reports across all students.
+- Strictly block students from executing admin/faculty functions. If attempted, reply politely explaining lack of permission.`;
 
     conversations.set(conversationId, [{ role: 'system', content: systemPrompt }]);
   }
@@ -39,7 +58,6 @@ Your behavior rules:
   const messages = conversations.get(conversationId)!;
   messages.push({ role: 'user', content: message });
 
-  // Limit message array length to keep performance high
   if (messages.length > 20) {
     const systemMsg = messages[0];
     const recentMsgs = messages.slice(-18);
@@ -48,22 +66,25 @@ Your behavior rules:
 
   try {
     let response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: QWEN_MODEL,
       messages,
       tools: agentTools,
       tool_choice: 'auto',
+      max_tokens: 1000,
     });
 
     let choice = response.choices[0];
     let toolCalls = choice.message.tool_calls;
-    let pendingConfirmation: any = null;
 
     while (toolCalls && toolCalls.length > 0) {
-      messages.push(choice.message);
+      // Fix: Sanitize content so OpenRouter doesn't crash on null
+      messages.push({
+        role: 'assistant',
+        content: choice.message.content || '', 
+        tool_calls: choice.message.tool_calls
+      });
 
       for (const toolCall of toolCalls) {
-        // --- TYPE GUARD ADDED HERE ---
-        // Narrows type to ChatCompletionMessageFunctionToolCall
         if (toolCall.type !== 'function') {
           continue; 
         }
@@ -109,37 +130,6 @@ Your behavior rules:
               : await courseService.fetchCoursesByFaculty(user.id);
           } 
           
-          // ─── STATE MUTATIONS (Intercepted for Two-Phase Commit) ───
-          else if (functionName === 'submit_leave_request') {
-            if (user.role !== 'student') {
-              toolResult = { error: 'Only student accounts can submit leaves.' };
-            } else {
-              pendingActions.set(conversationId, { type: 'submit_leave_request', args });
-              pendingConfirmation = { type: 'submit_leave_request', args };
-              toolResult = { status: 'pending_confirmation', message: 'Leave request drafted. Awaiting user confirmation.' };
-            }
-          } 
-          
-          else if (functionName === 'review_leave_request') {
-            if (user.role !== 'faculty' && user.role !== 'admin') {
-              toolResult = { error: 'Unauthorized.' };
-            } else {
-              pendingActions.set(conversationId, { type: 'review_leave_request', args });
-              pendingConfirmation = { type: 'review_leave_request', args };
-              toolResult = { status: 'pending_confirmation', message: 'Leave decision drafted. Awaiting user confirmation.' };
-            }
-          } 
-          
-          else if (functionName === 'mark_student_attendance') {
-            if (user.role !== 'faculty' && user.role !== 'admin') {
-              toolResult = { error: 'Unauthorized.' };
-            } else {
-              pendingActions.set(conversationId, { type: 'mark_student_attendance', args });
-              pendingConfirmation = { type: 'mark_student_attendance', args };
-              toolResult = { status: 'pending_confirmation', message: 'Attendance entry drafted. Awaiting user confirmation.' };
-            }
-          } 
-          
           else {
             toolResult = { error: 'Tool unrecognized.' };
           }
@@ -155,8 +145,9 @@ Your behavior rules:
       }
 
       response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: QWEN_MODEL,
         messages,
+        max_tokens: 1000,
       });
 
       choice = response.choices[0];
@@ -167,7 +158,6 @@ Your behavior rules:
 
     return {
       reply: choice.message.content,
-      pendingConfirmation,
       conversationId,
     };
   } catch (err: any) {
@@ -175,58 +165,11 @@ Your behavior rules:
     throw err;
   }
 };
-
+// Stub function to satisfy TypeScript compiler for read-only mode
 export const confirmPendingAction = async (conversationId: string, confirmed: boolean, user: any): Promise<any> => {
-  const pending = pendingActions.get(conversationId);
-
-  if (!pending) {
-    return { reply: 'No action is currently pending confirmation.', pendingConfirmation: null, conversationId };
-  }
-
-  pendingActions.delete(conversationId);
-
-  if (!confirmed) {
-    const cancelReply = `I've cancelled that action for you. What else can I help you with?`;
-    conversations.get(conversationId)?.push({ role: 'assistant', content: cancelReply });
-    return { reply: cancelReply, pendingConfirmation: null, conversationId };
-  }
-
-  try {
-    let successMessage = '';
-
-    if (pending.type === 'submit_leave_request') {
-      const { reason, fromDate, toDate } = pending.args;
-      await leaveService.createLeaveRequest(user.id, reason, fromDate, toDate);
-      successMessage = `Your leave request from **${fromDate}** to **${toDate}** for "*${reason}*" was submitted successfully!`;
-    } 
-    
-    else if (pending.type === 'review_leave_request') {
-      const { id, decision } = pending.args;
-      const res = await leaveService.processLeaveDecision(id, decision, user.id);
-      if (!res.success) throw new Error(res.error || 'Failed to review leave.');
-      successMessage = `Leave request **#${id}** has been marked **${decision}**!`;
-    } 
-    
-    else if (pending.type === 'mark_student_attendance') {
-      const { studentId, date, status } = pending.args;
-      await attendanceService.recordAttendance(studentId, user.id, date, status);
-      successMessage = `Successfully recorded: Student ID **#${studentId}** has been marked **${status}** for **${date}**!`;
-    } 
-    
-    else {
-      throw new Error(`Unknown action type: ${pending.type}`);
-    }
-
-    conversations.get(conversationId)?.push({ role: 'assistant', content: successMessage });
-
-    return {
-      reply: successMessage,
-      pendingConfirmation: null,
-      conversationId,
-    };
-  } catch (err: any) {
-    const errReply = `An error occurred: ${err.message}. Please try again.`;
-    conversations.get(conversationId)?.push({ role: 'assistant', content: errReply });
-    return { reply: errReply, pendingConfirmation: null, conversationId };
-  }
+  return { 
+    reply: 'Action confirmation is currently disabled (running in read-only mode).', 
+    pendingConfirmation: null, 
+    conversationId 
+  };
 };
