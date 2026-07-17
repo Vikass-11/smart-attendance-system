@@ -67,9 +67,9 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Force Rolldown Linux Binding
+      - name: Force Native Linux Bindings
         working-directory: frontend
-        run: npm install @rolldown/binding-linux-x64-gnu --no-save
+        run: npm install @rolldown/binding-linux-x64-gnu lightningcss-linux-x64-gnu --no-save
 
       - name: Build frontend
         working-directory: frontend
