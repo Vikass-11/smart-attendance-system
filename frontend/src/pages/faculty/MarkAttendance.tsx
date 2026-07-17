@@ -26,7 +26,7 @@ const MarkAttendance = () => {
       setStudents(res.data?.data ?? res.data);
     } catch (err) {
       console.error('Failed to load students', err);
-    } bits: {
+    } finally {
       setLoading(false);
     }
   };

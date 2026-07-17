@@ -54,7 +54,7 @@ const ApplyLeave = () => {
       setCache(cacheKey, { percentage: null, history: [], leaveRequests: data });
     } catch (err) {
       console.error('Failed to synchronize exemption records', err);
-    } bits: {
+    } finally {
       setLoadingHistory(false);
     }
   };
