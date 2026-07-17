@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Clock } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -48,31 +49,46 @@ const LeaveRequests = () => {
     }
   };
 
-  if (loading) return <Layout><p>Loading...</p></Layout>;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex h-[50vh] items-center justify-center">
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Loading leave queue entries...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Pending Leave Requests</h2>
+      <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm max-w-2xl">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="w-4 h-4 text-slate-400" />
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">Pending Leave Requests</h2>
+        </div>
         <div className="space-y-3">
-          {pendingLeaves.length === 0 && <p className="text-sm text-slate-400">No pending requests.</p>}
+          {pendingLeaves.length === 0 && (
+            <p className="text-xs text-slate-400 text-center py-6">No active entries requiring evaluation.</p>
+          )}
           {pendingLeaves.map((lr) => (
-            <div key={lr.id} className="border-b border-slate-100 pb-3">
-              <p className="text-sm font-medium text-slate-800">{lr.student_name}</p>
-              <p className="text-xs text-slate-500 mb-1">{lr.reason}</p>
-              <p className="text-xs text-slate-400 mb-2">
-                {new Date(lr.from_date).toLocaleDateString()} - {new Date(lr.to_date).toLocaleDateString()}
+            <div key={lr.id} className="p-4 rounded-xl border border-slate-100 dark:border-slate-900/60 bg-slate-50/30 dark:bg-slate-900/10 space-y-2">
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{lr.student_name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-0.5">"{lr.reason}"</p>
+              </div>
+              <p className="text-[11px] text-slate-400 font-medium tracking-wide">
+                Timeline: {new Date(lr.from_date).toLocaleDateString()} - {new Date(lr.to_date).toLocaleDateString()}
               </p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-1">
                 <button
                   onClick={() => handleReview(lr.id, 'approved')}
-                  className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200"
+                  className="text-xs bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3 py-1.5 rounded-md font-semibold transition-opacity hover:opacity-90"
                 >
                   Approve
                 </button>
                 <button
                   onClick={() => handleReview(lr.id, 'rejected')}
-                  className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200"
+                  className="text-xs border border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400 px-3 py-1.5 rounded-md font-semibold transition-colors hover:bg-slate-50 dark:hover:bg-slate-900"
                 >
                   Reject
                 </button>

@@ -1,45 +1,18 @@
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import Sidebar from './Sidebar';
-import AgentChat from './AgentChat';
 
-const Layout = ({ children }: { children: ReactNode }) => {
-  const { appUser, logout } = useAuth();
-  const navigate = useNavigate();
+// 1. Define the props interface to include children
+interface LayoutProps {
+  children: ReactNode;
+}
 
-  const handleLogout = async () => {
-    // 👉 CLEAR THE CHAT SESSION SO THE NEXT USER STARTS WITH A BLANK CANVAS
-    sessionStorage.removeItem('active_chat_session_id');
-
-    await logout();
-    navigate('/login');
-  };
-
+// 2. Apply the interface to the component
+const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col">
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-slate-500">Welcome back,</p>
-            <p className="font-semibold text-slate-900">{appUser?.name}</p>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-sm bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
-        </header>
-
-        <main className="flex-1 p-8 max-w-6xl w-full mx-auto">{children}</main>
-      </div>
-
-      <AgentChat />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">
+      {/* Your Sidebar / Navbar UI goes here */}
+      <main className="p-6">
+        {children} {/* This is where your page content is rendered */}
+      </main>
     </div>
   );
 };
