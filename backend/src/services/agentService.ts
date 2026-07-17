@@ -84,8 +84,14 @@ async function saveMessage(conversationId: string, role: string, content: string
 export const chat = async (conversationId: string, message: string, user: any): Promise<any> => {
   const openai = getOpenAIClient();
   
-  await saveMessage(conversationId, 'user', message);
+  // 1. FIRST: Ensure the session exists and grab the history (Swapped!)
   const messages = await getOrCreateSession(conversationId, user.id, user);
+  
+  // 2. SECOND: Now it is completely safe to save the user's new message
+  await saveMessage(conversationId, 'user', message);
+  
+  // 3. Append the user's new message to our local array before sending to OpenAI
+  messages.push({ role: 'user', content: message });
 
   try {
     let response = await openai.chat.completions.create({
