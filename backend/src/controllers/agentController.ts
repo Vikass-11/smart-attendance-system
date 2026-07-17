@@ -24,22 +24,26 @@ const getDeterministicUUID = (userId: number): string => {
 export const handleChat = async (req: Request, res: Response) => {
   try {
     const { message } = req.body;
+    const { conversationId } = req.body;
     const user = (req as any).user;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required.' });
     }
 
-    // Force every message to be saved under the user's permanent, secure UUID.
-    // This completely bypasses frontend stale storage and synchronization bugs.
+    // 1. Capture the frontend's requested Virtual ID
+    const requestedId = conversationId || 'default';
+
+    // 2. Map it to the user's permanent, secure Physical UUID in the database
     const secureId = getDeterministicUUID(user.id);
 
+    // 3. Process the chat using the secure database ID
     const result = await agentService.chat(secureId, message, user);
     
-    // Return the result and append the secure ID so the frontend can stay in sync
+    // 4. Return the response, mapping the ID back to the requested Virtual ID
     return res.status(200).json({
       ...result,
-      conversationId: secureId
+      conversationId: requestedId
     });
   } catch (error: any) {
     console.error('Error in agent controller handleChat:', error);
@@ -50,15 +54,17 @@ export const handleChat = async (req: Request, res: Response) => {
 // 2. Handles confirmation of pending actions (e.g., confirming read-only alerts)
 export const confirmAction = async (req: Request, res: Response) => {
   try {
-    const { confirmed } = req.body;
+    const { conversationId, confirmed } = req.body;
     const user = (req as any).user;
 
+    const requestedId = conversationId || 'default';
     const secureId = getDeterministicUUID(user.id);
+
     const result = await agentService.confirmPendingAction(secureId, confirmed, user);
     
     return res.status(200).json({
       ...result,
-      conversationId: secureId
+      conversationId: requestedId
     });
   } catch (error: any) {
     console.error('Error in agent controller confirmAction:', error);
@@ -69,6 +75,8 @@ export const confirmAction = async (req: Request, res: Response) => {
 // 3. Handles fetching secure history for the logged-in user
 export const getChatHistory = async (req: Request, res: Response) => {
   try {
+    // 1. Capture the Virtual ID the frontend is requesting (e.g. "default")
+    const requestedId = req.params.conversationId as string;
     const user = (req as any).user; 
 
     if (!user) {
@@ -77,12 +85,21 @@ export const getChatHistory = async (req: Request, res: Response) => {
 
     const userId = user.id;
 
-    // Force history lookup to pull from their deterministic, secure UUID
+    // 2. Force database lookup to pull from the deterministic, secure Physical UUID
     const secureId = getDeterministicUUID(userId);
 
     const history = await agentService.getMessagesBySession(secureId, userId);
     
-    return res.json(history);
+    // 3. Map all returned database messages back to the requested Virtual ID
+    // This tricks the frontend into bypassing its local ID filters perfectly!
+    const mappedHistory = Array.isArray(history)
+      ? history.map((msg: any) => ({
+          ...msg,
+          conversationId: requestedId
+        }))
+      : [];
+
+    return res.json(mappedHistory);
   } catch (error) {
     console.error("Error fetching chat history:", error);
     return res.status(500).json({ error: "Internal server error" });
