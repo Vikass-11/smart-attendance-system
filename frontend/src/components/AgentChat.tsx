@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Check, XCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import apiClient from '../api/axiosClient';
+import { useAuth } from '../hooks/useAuth'; // 👉 Import your auth hook!
 
 interface PendingConfirmation {
   toolName: string;
@@ -20,14 +21,27 @@ let messageIdCounter = 0;
 const nextId = () => `msg-${Date.now()}-${messageIdCounter++}`;
 
 const AgentChat = () => {
+  const { appUser } = useAuth(); // 👉 Get the current logged-in user
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(() => {
-    return localStorage.getItem('active_chat_session_id');
-  });
+
+  // Create a dynamic sessionStorage key unique to whoever is currently logged in
+  const sessionKey = appUser ? `active_chat_session_id_${appUser.id}` : 'active_chat_session_id_guest';
+
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Initialize or switch session when the logged-in user changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedId = sessionStorage.getItem(sessionKey);
+      setConversationId(savedId);
+      // If switching users, clear previous messages in UI
+      setMessages([]);
+    }
+  }, [sessionKey, isOpen]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -39,7 +53,7 @@ const AgentChat = () => {
         setLoading(true);
         try {
           const res = await apiClient.get(`/agent/history/${conversationId}`);
-          setMessages(res.data.messages || []);
+          setMessages(res.data || []);
         } catch (err) {
           console.error('Failed to sync history', err);
         } finally {
@@ -63,10 +77,12 @@ const AgentChat = () => {
         message: userText,
         conversationId,
       });
-      
+
       const newSessionId = res.data.conversationId;
       setConversationId(newSessionId);
-      localStorage.setItem('active_chat_session_id', newSessionId);
+
+      // Save specifically to this user's unique session storage key
+      sessionStorage.setItem(sessionKey, newSessionId);
 
       setMessages((prev) => [
         ...prev,
@@ -119,16 +135,19 @@ const AgentChat = () => {
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length === 0 && !loading && (
-              <p className="text-sm text-slate-400 text-center mt-8">
-                Try: "Show me students below 75% attendance"
+              <p className="text-sm text-slate-400 text-center mt-8 px-4">
+                {(appUser as any)?.role === 'Admin' || (appUser as any)?.role === 'Faculty' ? (
+                  <span>Try: "Show me students below 75% attendance"</span>
+                ) : (
+                  <span>Try: "What is my attendance percentage?"</span>
+                )}
               </p>
             )}
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
-                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
-                    msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'
-                  }`}
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${msg.role === 'user' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'
+                    }`}
                 >
                   <div className="prose prose-sm max-w-none">
                     <ReactMarkdown>{msg.text}</ReactMarkdown>

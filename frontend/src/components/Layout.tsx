@@ -10,6 +10,9 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    // 👉 CLEAR THE CHAT SESSION SO THE NEXT USER STARTS WITH A BLANK CANVAS
+    sessionStorage.removeItem('active_chat_session_id');
+
     await logout();
     navigate('/login');
   };
