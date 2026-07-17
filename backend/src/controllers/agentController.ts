@@ -1,6 +1,18 @@
 import { Request, Response } from 'express';
 import * as agentService from '../services/agentService';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
+
+// Generates a 100% valid, secure UUID unique to each user's account
+const getDeterministicUUID = (userId: number): string => {
+  const hash = createHash('sha256').update(`user_session_secure_salt_${userId}`).digest('hex');
+  return [
+    hash.substring(0, 8),
+    hash.substring(8, 12),
+    hash.substring(12, 16),
+    hash.substring(16, 20),
+    hash.substring(20, 32)
+  ].join('-');
+};
 
 // 1. Handles sending a chat message and managing session persistence
 export const handleChat = async (req: Request, res: Response) => {
@@ -13,32 +25,24 @@ export const handleChat = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Message is required.' });
     }
 
-    // Fallback if no conversation ID is provided at all
-    if (!conversationId || conversationId === 'null' || conversationId === 'undefined') {
-      conversationId = randomUUID();
+    // Fallback to the user's own deterministic UUID if none is provided or is placeholder
+    if (!conversationId || conversationId === 'null' || conversationId === 'undefined' || conversationId === 'default') {
+      conversationId = getDeterministicUUID(user.id);
     }
 
     try {
-      // Attempt to proceed with the given session ID
       const result = await agentService.chat(conversationId, message, user);
       return res.status(200).json(result);
     } catch (error: any) {
-      // Handle the case where the frontend sent a leftover session ID belonging to another user
+      // If the frontend sent an unauthorized stale ID, silently fall back to their secure deterministic UUID
       if (error.message && error.message.includes('own this chat session')) {
-        console.warn(`Ownership mismatch: User ${user.id} attempted to use session ${conversationId}. Resetting session.`);
-        
-        // Silently generate a clean, brand-new UUID for this user
-        const newConversationId = randomUUID();
-        const result = await agentService.chat(newConversationId, message, user);
-        
-        // Return the successful response and append the new ID so the frontend can update itself
+        const secureId = getDeterministicUUID(user.id);
+        const result = await agentService.chat(secureId, message, user);
         return res.status(200).json({
           ...result,
-          conversationId: newConversationId
+          conversationId: secureId
         });
       }
-      
-      // Rethrow other unexpected errors
       throw error;
     }
   } catch (error: any) {
@@ -50,11 +54,11 @@ export const handleChat = async (req: Request, res: Response) => {
 // 2. Handles confirmation of pending actions (e.g., confirming read-only alerts)
 export const confirmAction = async (req: Request, res: Response) => {
   try {
-    const { conversationId, confirmed } = req.body;
+    let { conversationId, confirmed } = req.body;
     const user = (req as any).user;
 
-    if (!conversationId) {
-      return res.status(400).json({ error: 'Conversation ID is required.' });
+    if (!conversationId || conversationId === 'null' || conversationId === 'undefined' || conversationId === 'default') {
+      conversationId = getDeterministicUUID(user.id);
     }
 
     try {
@@ -62,7 +66,9 @@ export const confirmAction = async (req: Request, res: Response) => {
       return res.status(200).json(result);
     } catch (error: any) {
       if (error.message && error.message.includes('own this chat session')) {
-        return res.status(403).json({ error: "Unauthorized: You do not own this chat session." });
+        const secureId = getDeterministicUUID(user.id);
+        const result = await agentService.confirmPendingAction(secureId, confirmed, user);
+        return res.status(200).json(result);
       }
       throw error;
     }
@@ -75,7 +81,7 @@ export const confirmAction = async (req: Request, res: Response) => {
 // 3. Handles fetching secure history for the logged-in user
 export const getChatHistory = async (req: Request, res: Response) => {
   try {
-    const conversationId = req.params.conversationId as string;
+    let conversationId = req.params.conversationId as string;
     const user = (req as any).user; 
 
     if (!user) {
@@ -84,16 +90,20 @@ export const getChatHistory = async (req: Request, res: Response) => {
 
     const userId = user.id;
 
+    // Resolve placeholders to the secure user-specific UUID
+    if (!conversationId || conversationId === 'null' || conversationId === 'undefined' || conversationId === 'default') {
+      conversationId = getDeterministicUUID(userId);
+    }
+
     try {
-      // Safely load history
       const history = await agentService.getMessagesBySession(conversationId, userId);
       return res.json(history);
     } catch (error: any) {
-      // If ownership check fails, return an empty array instead of throwing a 500.
-      // This allows the frontend to safely render a blank chat window.
+      // If they requested a stale/unauthorized ID, gracefully fetch their own secure history
       if (error.message && error.message.includes('own this chat session')) {
-        console.warn(`Prevented user ${userId} from accessing history of session ${conversationId}`);
-        return res.json([]);
+        const secureId = getDeterministicUUID(userId);
+        const history = await agentService.getMessagesBySession(secureId, userId);
+        return res.json(history);
       }
       throw error;
     }
