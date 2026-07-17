@@ -24,12 +24,31 @@ const AgentChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(() => {
+    return localStorage.getItem('active_chat_session_id');
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (isOpen && conversationId) {
+        setLoading(true);
+        try {
+          const res = await apiClient.get(`/agent/history/${conversationId}`);
+          setMessages(res.data.messages || []);
+        } catch (err) {
+          console.error('Failed to sync history', err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    loadHistory();
+  }, [isOpen, conversationId]);
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
@@ -44,7 +63,11 @@ const AgentChat = () => {
         message: userText,
         conversationId,
       });
-      setConversationId(res.data.conversationId);
+      
+      const newSessionId = res.data.conversationId;
+      setConversationId(newSessionId);
+      localStorage.setItem('active_chat_session_id', newSessionId);
+
       setMessages((prev) => [
         ...prev,
         { id: nextId(), role: 'assistant', text: res.data.reply, pendingConfirmation: res.data.pendingConfirmation },
@@ -95,7 +118,7 @@ const AgentChat = () => {
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.length === 0 && (
+            {messages.length === 0 && !loading && (
               <p className="text-sm text-slate-400 text-center mt-8">
                 Try: "Show me students below 75% attendance"
               </p>
