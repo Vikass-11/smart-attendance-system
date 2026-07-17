@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { verifyToken } from '../middleware/auth';
-import { handleChat, confirmAction, handleGetHistory } from '../controllers/agentController';
+import { handleChat, confirmAction, getChatHistory } from '../controllers/agentController';
 
 const router = Router();
 
-// Protect all agent endpoints behind the authentication token check
+// Protect all agent endpoints behind the authentication token
 router.use(verifyToken);
 
 // Chat endpoint (now handles automatic session creation/tracking)
@@ -14,6 +14,6 @@ router.post('/chat', handleChat);
 router.post('/confirm', confirmAction);
 
 // History endpoint to fetch past logs when opening the chat window
-router.get('/history/:conversationId', handleGetHistory);
+router.get('/history/:conversationId', getChatHistory);
 
 export default router;
