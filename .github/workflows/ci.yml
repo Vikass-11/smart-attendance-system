@@ -64,7 +64,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       # Clean, standard install. On Ubuntu, this automatically installs the correct
-      # glibc platform bindings for Rolldown without needing hacks!
+      # glibc platform bindings for lightningcss and rolldown!
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
