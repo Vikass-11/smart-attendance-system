@@ -2,45 +2,45 @@ import { Request, Response } from 'express';
 import * as agentService from '../services/agentService';
 import { randomUUID } from 'crypto';
 
-// Helper to guarantee a conversationId is unique to the logged-in user
-const getScopedConversationId = (conversationId: string | undefined, userId: number): string => {
-  const prefix = `user_${userId}_`;
-  
-  // If no ID is provided, or if it's a generic fallback string
-  if (!conversationId || conversationId === 'default' || conversationId === 'null' || conversationId === 'undefined') {
-    return `${prefix}${randomUUID()}`;
-  }
-  
-  // If already scoped to this user, leave it as is
-  if (conversationId.startsWith(prefix)) {
-    return conversationId;
-  }
-  
-  // Otherwise, prepend the user scope to make it unique
-  return `${prefix}${conversationId}`;
-};
-
 // 1. Handles sending a chat message and managing session persistence
 export const handleChat = async (req: Request, res: Response) => {
   try {
     const { message } = req.body;
-    const { conversationId } = req.body;
+    let { conversationId } = req.body;
     const user = (req as any).user;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required.' });
     }
 
-    // Securely scope the session ID on the backend
-    const scopedId = getScopedConversationId(conversationId, user.id);
+    // Fallback if no conversation ID is provided at all
+    if (!conversationId || conversationId === 'null' || conversationId === 'undefined') {
+      conversationId = randomUUID();
+    }
 
-    const result = await agentService.chat(scopedId, message, user);
-    
-    // Return the scoped ID back so the frontend can track it
-    return res.status(200).json({
-      ...result,
-      conversationId: scopedId
-    });
+    try {
+      // Attempt to proceed with the given session ID
+      const result = await agentService.chat(conversationId, message, user);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      // Handle the case where the frontend sent a leftover session ID belonging to another user
+      if (error.message && error.message.includes('own this chat session')) {
+        console.warn(`Ownership mismatch: User ${user.id} attempted to use session ${conversationId}. Resetting session.`);
+        
+        // Silently generate a clean, brand-new UUID for this user
+        const newConversationId = randomUUID();
+        const result = await agentService.chat(newConversationId, message, user);
+        
+        // Return the successful response and append the new ID so the frontend can update itself
+        return res.status(200).json({
+          ...result,
+          conversationId: newConversationId
+        });
+      }
+      
+      // Rethrow other unexpected errors
+      throw error;
+    }
   } catch (error: any) {
     console.error('Error in agent controller handleChat:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
@@ -57,13 +57,15 @@ export const confirmAction = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Conversation ID is required.' });
     }
 
-    const scopedId = getScopedConversationId(conversationId, user.id);
-    const result = await agentService.confirmPendingAction(scopedId, confirmed, user);
-    
-    return res.status(200).json({
-      ...result,
-      conversationId: scopedId
-    });
+    try {
+      const result = await agentService.confirmPendingAction(conversationId, confirmed, user);
+      return res.status(200).json(result);
+    } catch (error: any) {
+      if (error.message && error.message.includes('own this chat session')) {
+        return res.status(403).json({ error: "Unauthorized: You do not own this chat session." });
+      }
+      throw error;
+    }
   } catch (error: any) {
     console.error('Error in agent controller confirmAction:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
@@ -82,12 +84,19 @@ export const getChatHistory = async (req: Request, res: Response) => {
 
     const userId = user.id;
 
-    // Apply the same user-scoped check to prevent cross-account history reading
-    const scopedId = getScopedConversationId(conversationId, userId);
-
-    const history = await agentService.getMessagesBySession(scopedId, userId);
-    
-    return res.json(history);
+    try {
+      // Safely load history
+      const history = await agentService.getMessagesBySession(conversationId, userId);
+      return res.json(history);
+    } catch (error: any) {
+      // If ownership check fails, return an empty array instead of throwing a 500.
+      // This allows the frontend to safely render a blank chat window.
+      if (error.message && error.message.includes('own this chat session')) {
+        console.warn(`Prevented user ${userId} from accessing history of session ${conversationId}`);
+        return res.json([]);
+      }
+      throw error;
+    }
   } catch (error) {
     console.error("Error fetching chat history:", error);
     return res.status(500).json({ error: "Internal server error" });
