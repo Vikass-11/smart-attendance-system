@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-RUN npm install @rolldown/binding-linux-x64-gnu lightningcss-linux-x64-gnu --no-save
+RUN npm install @rolldown/binding-linux-x64-gnu lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu --no-save
 
 COPY . .
 RUN npm run build
