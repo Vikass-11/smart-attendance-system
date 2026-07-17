@@ -3,7 +3,7 @@ import { agentTools } from './agentTools';
 import * as attendanceService from './attendanceService';
 import * as timetableService from './timetableService';
 import * as courseService from './courseService';
-import db from '../config/db'; // Adjust this path to match your DB connection file
+import db from '../config/db'; 
 
 let openaiInstance: OpenAI | null = null;
 
@@ -31,9 +31,11 @@ const getOpenAIClient = (): OpenAI => {
 const QWEN_MODEL = 'qwen/qwen3.6-plus';
 
 async function getOrCreateSession(conversationId: string, userId: number, userContext: any): Promise<any[]> {
-  const [sessionExists]: any = await db.execute('SELECT id FROM chat_sessions WHERE id = ?', [conversationId]);
+  // SECURITY FIX: Select the user_id to verify ownership
+  const [sessionRows]: any = await db.execute('SELECT user_id FROM chat_sessions WHERE id = ?', [conversationId]);
   
-  if (sessionExists.length === 0) {
+  if (sessionRows.length === 0) {
+    // If session doesn't exist, create it bound to this specific user
     await db.execute('INSERT INTO chat_sessions (id, user_id) VALUES (?, ?)', [conversationId, userId]);
     
     const systemPrompt = `You are a helpful and intelligent AI Assistant for the Smart Attendance System.
@@ -53,6 +55,11 @@ Your behavior rules:
       'INSERT INTO chat_messages (session_id, role, content) VALUES (?, ?, ?)',
       [conversationId, 'system', systemPrompt]
     );
+  } else {
+    // SECURITY GUARDRAIL: If session exists but belongs to a different user, block access!
+    if (sessionRows[0].user_id !== userId) {
+      throw new Error('Unauthorized: You do not own this chat session.');
+    }
   }
 
   const [rows]: any = await db.execute(
@@ -84,13 +91,11 @@ async function saveMessage(conversationId: string, role: string, content: string
 export const chat = async (conversationId: string, message: string, user: any): Promise<any> => {
   const openai = getOpenAIClient();
   
-  // 1. FIRST: Ensure the session exists and grab the history (Swapped!)
+  // 1. FIRST: Ensure the session exists and verify ownership
   const messages = await getOrCreateSession(conversationId, user.id, user);
   
-  // 2. SECOND: Now it is completely safe to save the user's new message
+  // 2. SECOND: Save the user's message safely
   await saveMessage(conversationId, 'user', message);
-  
-  // 3. Append the user's new message to our local array before sending to OpenAI
   messages.push({ role: 'user', content: message });
 
   try {
@@ -201,7 +206,14 @@ export const confirmPendingAction = async (conversationId: string, confirmed: bo
   };
 };
 
-export const getMessagesBySession = async (conversationId: string): Promise<any[]> => {
+// SECURITY FIX: Added userId parameter to verify history retrieval rights
+export const getMessagesBySession = async (conversationId: string, userId: number): Promise<any[]> => {
+  const [sessionRows]: any = await db.execute('SELECT user_id FROM chat_sessions WHERE id = ?', [conversationId]);
+  
+  if (sessionRows.length === 0 || sessionRows[0].user_id !== userId) {
+    return []; // Return empty array if session doesn't exist or doesn't belong to the logged-in user
+  }
+
   const [rows]: any = await db.execute(
     'SELECT role, content FROM chat_messages WHERE session_id = ? AND role IN ("user", "assistant") ORDER BY id ASC',
     [conversationId]
