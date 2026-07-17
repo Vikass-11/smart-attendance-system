@@ -30,14 +30,27 @@ const getOpenAIClient = (): OpenAI => {
 
 const QWEN_MODEL = 'qwen/qwen3.6-plus';
 
+// 👉 READ-ONLY HELPER: Resolves a student's name to their user ID in the database
+async function findStudentIdByName(name: string): Promise<number | null> {
+  try {
+    const [rows]: any = await db.execute(
+      'SELECT id FROM users WHERE LOWER(name) LIKE ? AND LOWER(role) = "student"',
+      [`%${name.toLowerCase()}%`]
+    );
+    return rows.length > 0 ? rows[0].id : null;
+  } catch (err) {
+    console.error('Error finding student by name:', err);
+    return null;
+  }
+}
+
 async function getOrCreateSession(conversationId: string, userId: number, userContext: any): Promise<any[]> {
-  // SECURITY FIX: Select the user_id to verify ownership
   const [sessionRows]: any = await db.execute('SELECT user_id FROM chat_sessions WHERE id = ?', [conversationId]);
   
   if (sessionRows.length === 0) {
-    // If session doesn't exist, create it bound to this specific user
     await db.execute('INSERT INTO chat_sessions (id, user_id) VALUES (?, ?)', [conversationId, userId]);
     
+    // Updated instructions to enforce read-only expectations and student name lookups
     const systemPrompt = `You are a helpful and intelligent AI Assistant for the Smart Attendance System.
 Current User Context:
 - User ID: ${userContext.id}
@@ -47,8 +60,9 @@ Current User Context:
 
 Your behavior rules:
 - Assist the user with their queries regarding attendance, courses, and timetable.
+- This system operates in STRICTLY READ-ONLY mode. You do not possess tools to update, edit, modify, or delete records. If asked to make changes, politely explain this read-only restriction.
 - Students can only view their own attendance, percentage, courses, and timetable.
-- Faculty and Admin users are fully authorized to check daily class attendance lists and view low attendance reports across all students.
+- Faculty and Admin users are fully authorized to check daily class attendance lists, view low attendance reports across all students, and lookup/view the detailed attendance history of any specific student by name.
 - Strictly block students from executing admin/faculty functions. If attempted, reply politely explaining lack of permission.`;
 
     await db.execute(
@@ -56,7 +70,6 @@ Your behavior rules:
       [conversationId, 'system', systemPrompt]
     );
   } else {
-    // SECURITY GUARDRAIL: If session exists but belongs to a different user, block access!
     if (sessionRows[0].user_id !== userId) {
       throw new Error('Unauthorized: You do not own this chat session.');
     }
@@ -90,11 +103,8 @@ async function saveMessage(conversationId: string, role: string, content: string
 
 export const chat = async (conversationId: string, message: string, user: any): Promise<any> => {
   const openai = getOpenAIClient();
-  
-  // 1. FIRST: Ensure the session exists and verify ownership
   const messages = await getOrCreateSession(conversationId, user.id, user);
   
-  // 2. SECOND: Save the user's message safely
   await saveMessage(conversationId, 'user', message);
   messages.push({ role: 'user', content: message });
 
@@ -138,6 +148,21 @@ export const chat = async (conversationId: string, message: string, user: any): 
               ? { error: 'Only student accounts can fetch percentage.' } 
               : await attendanceService.computeAttendancePercentage(user.id);
           } 
+          // 👉 NEW READ TOOL HANDLER: Fetches another student's history by their name (Admin/Faculty only)
+          else if (functionName === 'get_student_attendance_history') {
+            if (user.role !== 'faculty' && user.role !== 'admin') {
+              toolResult = { error: 'Unauthorized.' };
+            } else if (!args.student_name) {
+              toolResult = { error: 'Student name is required.' };
+            } else {
+              const targetStudentId = await findStudentIdByName(args.student_name);
+              if (!targetStudentId) {
+                toolResult = { error: `Could not find a student named "${args.student_name}".` };
+              } else {
+                toolResult = await attendanceService.fetchStudentHistory(targetStudentId);
+              }
+            }
+          }
           else if (functionName === 'get_class_attendance') {
             toolResult = (user.role !== 'faculty' && user.role !== 'admin') 
               ? { error: 'Unauthorized.' } 
@@ -200,18 +225,17 @@ export const chat = async (conversationId: string, message: string, user: any): 
 
 export const confirmPendingAction = async (conversationId: string, confirmed: boolean, user: any): Promise<any> => {
   return { 
-    reply: 'Action confirmation is currently disabled (running in read-only mode).', 
+    reply: 'Action confirmation is disabled. The assistant is configured in read-only mode.', 
     pendingConfirmation: null, 
     conversationId 
   };
 };
 
-// SECURITY FIX: Added userId parameter to verify history retrieval rights
 export const getMessagesBySession = async (conversationId: string, userId: number): Promise<any[]> => {
   const [sessionRows]: any = await db.execute('SELECT user_id FROM chat_sessions WHERE id = ?', [conversationId]);
   
   if (sessionRows.length === 0 || sessionRows[0].user_id !== userId) {
-    return []; // Return empty array if session doesn't exist or doesn't belong to the logged-in user
+    return []; 
   }
 
   const [rows]: any = await db.execute(

@@ -60,4 +60,22 @@ export const agentTools: ChatCompletionTool[] = [
       parameters: { type: 'object', properties: {} },
     },
   },
+  // 👉 NEW READ-ONLY TOOL: Resolves names to IDs internally to fetch individual histories safely
+  {
+    type: 'function',
+    function: {
+      name: 'get_student_attendance_history',
+      description: 'Get the date-by-date attendance history records for a specific student by providing their name (Faculty/Admin only).',
+      parameters: {
+        type: 'object',
+        properties: {
+          student_name: {
+            type: 'string',
+            description: 'The name of the student whose attendance history needs to be checked (e.g., "Diana Prince").',
+          },
+        },
+        required: ['student_name'],
+      },
+    },
+  },
 ];
