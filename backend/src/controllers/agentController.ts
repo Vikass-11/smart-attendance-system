@@ -1,57 +1,63 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import * as agentService from '../services/agentService';
-import { AuthenticatedRequest } from '../types';
 import { randomUUID } from 'crypto';
 
-export const chatWithAgent = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { message, conversationId } = req.body;
-
-  if (!message || typeof message !== 'string') {
-    res.status(400).json({ error: 'message is required and must be a string' });
-    return;
-  }
-
-  if (conversationId != null && typeof conversationId !== 'string') {
-    res.status(400).json({ error: 'conversationId must be a string' });
-    return;
-  }
-
-  const convId = conversationId || randomUUID();
-
+// 1. Handles sending a chat message and managing session persistence
+export const handleChat = async (req: Request, res: Response) => {
   try {
-    const result = await agentService.chat(convId, message, req.user!);
-    res.json(result);
-  } catch (err: any) {
-    const isFunctionCallError =
-      err.message?.includes('tool call validation failed') ||
-      err.message?.includes('Failed to call a function') ||
-      err.status === 400;
+    const { message } = req.body;
+    let { conversationId } = req.body;
+    const user = (req as any).user;
 
-    if (isFunctionCallError) {
-      console.error('Agent function call error:', err);
-      res.json({
-        reply: `I encountered an issue processing that: ${err.message}`,
-        pendingConfirmation: null,
-        conversationId: convId,
-      });
-      return;
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required.' });
     }
-    res.status(500).json({ error: 'Agent failed to respond', details: err.message });
+
+    if (!conversationId) {
+      conversationId = randomUUID();
+    }
+
+    const result = await agentService.chat(conversationId, message, user);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error('Error in agent controller handleChat:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
 
-export const confirmAction = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const { conversationId, confirmed } = req.body;
-
-  if (!conversationId || confirmed === undefined) {
-    res.status(400).json({ error: 'conversationId and confirmed are required' });
-    return;
-  }
-
+// 2. Handles confirmation of pending actions (e.g., confirming read-only alerts)
+export const confirmAction = async (req: Request, res: Response) => {
   try {
-    const result = await agentService.confirmPendingAction(conversationId, confirmed, req.user!);
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ error: 'Failed to process confirmation', details: err.message });
+    const { conversationId, confirmed } = req.body;
+    const user = (req as any).user;
+
+    if (!conversationId) {
+      return res.status(400).json({ error: 'Conversation ID is required.' });
+    }
+
+    const result = await agentService.confirmPendingAction(conversationId, confirmed, user);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error('Error in agent controller confirmAction:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+// 3. Fetches past chat logs for a session when the chat UI opens
+// 3. Fetches past chat logs for a session when the chat UI opens
+export const handleGetHistory = async (req: Request, res: Response) => {
+  try {
+    // Explicitly cast to string to satisfy the TypeScript compiler
+    const conversationId = req.params.conversationId as string;
+    
+    if (!conversationId) {
+      return res.status(400).json({ error: 'Conversation ID is required.' });
+    }
+    
+    const messages = await agentService.getMessagesBySession(conversationId);
+    return res.status(200).json({ messages });
+  } catch (error: any) {
+    console.error('Error fetching chat history:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };

@@ -3,11 +3,8 @@ import { agentTools } from './agentTools';
 import * as attendanceService from './attendanceService';
 import * as timetableService from './timetableService';
 import * as courseService from './courseService';
+import db from '../config/db'; // Adjust this path to match your DB connection file
 
-// Conversations mapping stateful session memory
-const conversations = new Map<string, any[]>();
-
-// --- LAZY-LOADED OPENAI CLIENT ---
 let openaiInstance: OpenAI | null = null;
 
 const getOpenAIClient = (): OpenAI => {
@@ -16,9 +13,7 @@ const getOpenAIClient = (): OpenAI => {
     const baseURL = process.env.QWEN_BASE_URL || 'https://openrouter.ai/api/v1';
 
     if (!apiKey) {
-      throw new Error(
-        'Missing API credentials. Please set QWEN_API_KEY or OPENAI_API_KEY in your .env file.'
-      );
+      throw new Error('Missing API credentials.');
     }
 
     openaiInstance = new OpenAI({
@@ -33,18 +28,20 @@ const getOpenAIClient = (): OpenAI => {
   return openaiInstance;
 };
 
-const QWEN_MODEL = 'qwen/qwen3.6-plus'; 
+const QWEN_MODEL = 'qwen/qwen3.6-plus';
 
-export const chat = async (conversationId: string, message: string, user: any): Promise<any> => {
-  const openai = getOpenAIClient();
-
-  if (!conversations.has(conversationId)) {
+async function getOrCreateSession(conversationId: string, userId: number, userContext: any): Promise<any[]> {
+  const [sessionExists]: any = await db.execute('SELECT id FROM chat_sessions WHERE id = ?', [conversationId]);
+  
+  if (sessionExists.length === 0) {
+    await db.execute('INSERT INTO chat_sessions (id, user_id) VALUES (?, ?)', [conversationId, userId]);
+    
     const systemPrompt = `You are a helpful and intelligent AI Assistant for the Smart Attendance System.
 Current User Context:
-- User ID: ${user.id}
-- Name: ${user.name}
-- Email: ${user.email}
-- Role: ${user.role}
+- User ID: ${userContext.id}
+- Name: ${userContext.name}
+- Email: ${userContext.email}
+- Role: ${userContext.role}
 
 Your behavior rules:
 - Assist the user with their queries regarding attendance, courses, and timetable.
@@ -52,17 +49,43 @@ Your behavior rules:
 - Faculty and Admin users are fully authorized to check daily class attendance lists and view low attendance reports across all students.
 - Strictly block students from executing admin/faculty functions. If attempted, reply politely explaining lack of permission.`;
 
-    conversations.set(conversationId, [{ role: 'system', content: systemPrompt }]);
+    await db.execute(
+      'INSERT INTO chat_messages (session_id, role, content) VALUES (?, ?, ?)',
+      [conversationId, 'system', systemPrompt]
+    );
   }
 
-  const messages = conversations.get(conversationId)!;
-  messages.push({ role: 'user', content: message });
+  const [rows]: any = await db.execute(
+    'SELECT role, content, tool_calls, tool_call_id FROM chat_messages WHERE session_id = ? ORDER BY id ASC',
+    [conversationId]
+  );
 
-  if (messages.length > 20) {
-    const systemMsg = messages[0];
-    const recentMsgs = messages.slice(-18);
-    conversations.set(conversationId, [systemMsg, ...recentMsgs]);
-  }
+  return rows.map((row: any) => ({
+    role: row.role,
+    content: row.content || '',
+    ...(row.tool_calls && { tool_calls: typeof row.tool_calls === 'string' ? JSON.parse(row.tool_calls) : row.tool_calls }),
+    ...(row.tool_call_id && { tool_call_id: row.tool_call_id })
+  }));
+}
+
+async function saveMessage(conversationId: string, role: string, content: string, toolCalls?: any, toolCallId?: string) {
+  await db.execute(
+    'INSERT INTO chat_messages (session_id, role, content, tool_calls, tool_call_id) VALUES (?, ?, ?, ?, ?)',
+    [
+      conversationId,
+      role,
+      content,
+      toolCalls ? JSON.stringify(toolCalls) : null,
+      toolCallId || null
+    ]
+  );
+}
+
+export const chat = async (conversationId: string, message: string, user: any): Promise<any> => {
+  const openai = getOpenAIClient();
+  
+  await saveMessage(conversationId, 'user', message);
+  const messages = await getOrCreateSession(conversationId, user.id, user);
 
   try {
     let response = await openai.chat.completions.create({
@@ -77,17 +100,17 @@ Your behavior rules:
     let toolCalls = choice.message.tool_calls;
 
     while (toolCalls && toolCalls.length > 0) {
-      // Fix: Sanitize content so OpenRouter doesn't crash on null
+      const assistantContent = choice.message.content || '';
+      await saveMessage(conversationId, 'assistant', assistantContent, toolCalls);
+      
       messages.push({
         role: 'assistant',
-        content: choice.message.content || '', 
-        tool_calls: choice.message.tool_calls
+        content: assistantContent,
+        tool_calls: toolCalls
       });
 
       for (const toolCall of toolCalls) {
-        if (toolCall.type !== 'function') {
-          continue; 
-        }
+        if (toolCall.type !== 'function') continue;
 
         const functionName = toolCall.function.name;
         const args = JSON.parse(toolCall.function.arguments);
@@ -99,37 +122,31 @@ Your behavior rules:
               ? { error: 'Only student accounts can fetch their history.' } 
               : await attendanceService.fetchStudentHistory(user.id);
           } 
-          
           else if (functionName === 'get_my_attendance_percentage') {
             toolResult = user.role !== 'student' 
               ? { error: 'Only student accounts can fetch percentage.' } 
               : await attendanceService.computeAttendancePercentage(user.id);
           } 
-          
           else if (functionName === 'get_class_attendance') {
             toolResult = (user.role !== 'faculty' && user.role !== 'admin') 
               ? { error: 'Unauthorized.' } 
               : await attendanceService.fetchClassAttendance(args.date);
           } 
-          
           else if (functionName === 'get_low_attendance_students') {
             toolResult = (user.role !== 'faculty' && user.role !== 'admin') 
               ? { error: 'Unauthorized.' } 
               : await attendanceService.fetchLowAttendanceStudents(args.threshold ?? 75);
           } 
-          
           else if (functionName === 'get_my_timetable') {
             toolResult = user.role === 'student' 
               ? await timetableService.fetchStudentTimetable(user.id) 
               : await timetableService.fetchFacultyTimetable(user.id);
           } 
-          
           else if (functionName === 'get_my_courses') {
             toolResult = user.role === 'student' 
               ? await courseService.fetchStudentCourses(user.id) 
               : await courseService.fetchCoursesByFaculty(user.id);
           } 
-          
           else {
             toolResult = { error: 'Tool unrecognized.' };
           }
@@ -137,10 +154,13 @@ Your behavior rules:
           toolResult = { error: execErr.message || 'Execution error' };
         }
 
+        const toolContent = JSON.stringify(toolResult);
+        await saveMessage(conversationId, 'tool', toolContent, null, toolCall.id);
+        
         messages.push({
           role: 'tool',
           tool_call_id: toolCall.id,
-          content: JSON.stringify(toolResult),
+          content: toolContent,
         });
       }
 
@@ -154,10 +174,11 @@ Your behavior rules:
       toolCalls = choice.message.tool_calls;
     }
 
-    messages.push({ role: 'assistant', content: choice.message.content || '' });
+    const finalContent = choice.message.content || '';
+    await saveMessage(conversationId, 'assistant', finalContent);
 
     return {
-      reply: choice.message.content,
+      reply: finalContent,
       conversationId,
     };
   } catch (err: any) {
@@ -165,11 +186,24 @@ Your behavior rules:
     throw err;
   }
 };
-// Stub function to satisfy TypeScript compiler for read-only mode
+
 export const confirmPendingAction = async (conversationId: string, confirmed: boolean, user: any): Promise<any> => {
   return { 
     reply: 'Action confirmation is currently disabled (running in read-only mode).', 
     pendingConfirmation: null, 
     conversationId 
   };
+};
+
+export const getMessagesBySession = async (conversationId: string): Promise<any[]> => {
+  const [rows]: any = await db.execute(
+    'SELECT role, content FROM chat_messages WHERE session_id = ? AND role IN ("user", "assistant") ORDER BY id ASC',
+    [conversationId]
+  );
+  return rows.map((row: any, index: number) => ({
+    id: `hist-${index}`,
+    role: row.role,
+    text: row.content || '',
+    pendingConfirmation: null
+  }));
 };
