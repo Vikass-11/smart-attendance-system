@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Calendar, CheckSquare } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import { useDashboardStore } from '../../store/dashboardStore';
@@ -25,7 +26,7 @@ const MarkAttendance = () => {
       setStudents(res.data?.data ?? res.data);
     } catch (err) {
       console.error('Failed to load students', err);
-    } finally {
+    } bits: {
       setLoading(false);
     }
   };
@@ -64,46 +65,67 @@ const MarkAttendance = () => {
     }
   };
 
-  if (loading) return <Layout><p>Loading...</p></Layout>;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex h-[50vh] items-center justify-center">
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Syncing class list indices...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="font-semibold text-slate-900">Mark Attendance</h2>
-          <input
-            type="date"
-            value={markDate}
-            onChange={(e) => setMarkDate(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm"
-          />
+      <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm max-w-3xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="h-4 w-4 text-slate-400" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Roster Checklist Input</h2>
+          </div>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+            <input
+              type="date"
+              value={markDate}
+              onChange={(e) => setMarkDate(e.target.value)}
+              className="border border-slate-200 pl-9 pr-3 py-1.5 text-xs rounded-lg bg-transparent text-slate-900 dark:text-white dark:border-slate-800 focus:outline-none"
+            />
+          </div>
         </div>
 
-        {saveMessage && <p className="text-sm text-indigo-600 mb-3">{saveMessage}</p>}
+        {saveMessage && (
+          <div className="mb-4 p-3 rounded-md text-xs font-semibold bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300">
+            {saveMessage}
+          </div>
+        )}
 
-        <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
-          {students.length === 0 && <p className="text-sm text-slate-400">No students found.</p>}
+        <div className="space-y-1 divide-y divide-slate-100 dark:divide-slate-800/60 max-h-96 overflow-y-auto pr-1 mb-6">
+          {students.length === 0 && <p className="text-sm text-slate-400 py-4 text-center">No students registered.</p>}
           {students.map((student) => (
-            <div key={student.id} className="flex justify-between items-center border-b border-slate-100 pb-2">
-              <span className="text-sm text-slate-700">{student.name} <span className="text-slate-400">({student.email})</span></span>
+            <div key={student.id} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                {student.name} <span className="text-slate-400 font-normal text-xs">({student.email})</span>
+              </span>
               <div className="flex gap-1">
-                {['present', 'absent', 'late'].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => handleStatusChange(student.id, status)}
-                    className={`text-xs px-2 py-1 rounded ${
-                      attendanceMap[student.id] === status
-                        ? status === 'present'
-                          ? 'bg-green-600 text-white'
-                          : status === 'absent'
-                          ? 'bg-red-600 text-white'
-                          : 'bg-yellow-500 text-white'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
+                {['present', 'absent', 'late'].map((status) => {
+                  const active = attendanceMap[student.id] === status;
+                  const theme = 
+                    status === 'present' ? 'bg-emerald-600 text-white' : 
+                    status === 'absent' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white';
+                  
+                  return (
+                    <button
+                      key={status}
+                      onClick={() => handleStatusChange(student.id, status)}
+                      className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1.5 rounded transition-all ${
+                        active ? theme : 'bg-slate-50 dark:bg-slate-900 text-slate-400'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -112,7 +134,7 @@ const MarkAttendance = () => {
         <button
           onClick={handleSaveAttendance}
           disabled={saving || Object.keys(attendanceMap).length === 0}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity"
         >
           {saving ? 'Saving...' : `Save Attendance (${Object.keys(attendanceMap).length})`}
         </button>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Building2, Users, FileText } from 'lucide-react';
+import { Building2, Users, FileText, ArrowRight } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import { useAuth } from '../../hooks/useAuth';
@@ -29,7 +29,7 @@ const AdminOverview = () => {
           setSummary(summaryObj);
         } catch (err) {
           console.error('Failed to load summary', err);
-        } finally {
+        } bits: {
           setLoading(false);
         }
       })();
@@ -40,75 +40,64 @@ const AdminOverview = () => {
     };
   }, [monthStart, today]);
 
-  if (loading) return <Layout><p>Loading...</p></Layout>;
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex h-[50vh] items-center justify-center">
+          <p className="text-sm font-medium text-slate-500 animate-pulse">Loading system overview data...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold text-slate-900 mb-1">Welcome, {appUser?.name}</h1>
-      <p className="text-slate-500 mb-8">Institution-wide overview for this month.</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-cyan-400"></div>
-          <p className="text-sm text-slate-500">Total Students</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.total_students ?? 0}</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-green-400"></div>
-          <p className="text-sm text-slate-500">Overall Attendance</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.overall_percentage ?? 0}%</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-400"></div>
-          <p className="text-sm text-slate-500">Present (This Month)</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.total_present ?? 0}</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-pink-400"></div>
-          <p className="text-sm text-slate-500">Absent (This Month)</p>
-          <p className="text-3xl font-bold mt-1 text-slate-900">{summary?.total_absent ?? 0}</p>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome, {appUser?.name}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Institution-wide overview for this month.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link
-          to="/dashboard/departments"
-          className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow flex items-center gap-4"
-        >
-          <div className="bg-indigo-50 p-3 rounded-lg">
-            <Building2 className="w-6 h-6 text-indigo-600" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+        {[
+          { label: 'Total Students', value: summary?.total_students ?? 0, line: 'from-indigo-500 to-cyan-400' },
+          { label: 'Overall Attendance', value: `${summary?.overall_percentage ?? 0}%`, line: 'from-emerald-500 to-green-400' },
+          { label: 'Present (This Month)', value: summary?.total_present ?? 0, line: 'from-indigo-500 to-purple-400' },
+          { label: 'Absent (This Month)', value: summary?.total_absent ?? 0, line: 'from-red-500 to-pink-400' }
+        ].map((card, i) => (
+          <div key={i} className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 relative overflow-hidden shadow-sm flex flex-col justify-between">
+            <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${card.line}`} />
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{card.label}</span>
+            <p className="text-3xl font-bold mt-3 text-slate-900 dark:text-white tracking-tight">{card.value}</p>
           </div>
-          <div>
-            <p className="font-medium text-slate-900">Departments</p>
-            <p className="text-sm text-slate-500">Manage institution departments</p>
-          </div>
-        </Link>
+        ))}
+      </div>
 
-        <Link
-          to="/dashboard/users"
-          className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow flex items-center gap-4"
-        >
-          <div className="bg-cyan-50 p-3 rounded-lg">
-            <Users className="w-6 h-6 text-cyan-600" />
-          </div>
-          <div>
-            <p className="font-medium text-slate-900">Users</p>
-            <p className="text-sm text-slate-500">Manage students, faculty, and admins</p>
-          </div>
-        </Link>
-
-        <Link
-          to="/dashboard/reports"
-          className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow flex items-center gap-4"
-        >
-          <div className="bg-amber-50 p-3 rounded-lg">
-            <FileText className="w-6 h-6 text-amber-600" />
-          </div>
-          <div>
-            <p className="font-medium text-slate-900">Reports</p>
-            <p className="text-sm text-slate-500">Department breakdown and exports</p>
-          </div>
-        </Link>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {[
+          { to: '/dashboard/departments', icon: Building2, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:text-indigo-400', title: 'Departments', desc: 'Manage institution departments' },
+          { to: '/dashboard/users', icon: Users, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950/30 dark:text-cyan-400', title: 'Users', desc: 'Manage students, faculty, and admins' },
+          { to: '/dashboard/reports', icon: FileText, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400', title: 'Reports', desc: 'Department breakdown and exports' }
+        ].map((link, i) => {
+          const Icon = link.icon;
+          return (
+            <Link
+              key={i}
+              to={link.to}
+              className="group bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all flex items-center justify-between gap-4"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl transition-transform group-hover:scale-105 ${link.color}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm text-slate-900 dark:text-white">{link.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{link.desc}</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          );
+        })}
       </div>
     </Layout>
   );
