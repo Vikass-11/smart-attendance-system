@@ -4,7 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import App from './App';
 import './index.css';
+import { applyTheme, getInitialTheme } from './lib/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+applyTheme(getInitialTheme());
 
 const queryClient = new QueryClient({
   defaultOptions: {

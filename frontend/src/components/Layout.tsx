@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sun, Moon, LogOut, ArrowLeft } from 'lucide-react';
 import Sidebar from './Sidebar';
 import AgentChat from './AgentChat';
 import apiClient from '../api/axiosClient';
+import { useTheme } from '../hooks/useTheme';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,23 +13,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [darkMode, setDarkMode] = useState(() => {
-    return (
-      localStorage.getItem('theme') === 'dark' ||
-      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    );
-  });
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+  const { darkMode, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     if (!confirm('Are you sure you want to log out of the session?')) return;
@@ -70,9 +54,11 @@ const Layout = ({ children }: LayoutProps) => {
 
           <div className="flex items-center gap-2 md:gap-3">
             <button
-              onClick={() => setDarkMode(!darkMode)}
+              type="button"
+              onClick={toggleTheme}
               className="p-1.5 md:p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors border border-transparent outline-none"
               title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {darkMode ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
             </button>
