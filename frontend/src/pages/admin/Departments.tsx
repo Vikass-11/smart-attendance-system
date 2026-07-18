@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { Plus, Trash2, Building, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
