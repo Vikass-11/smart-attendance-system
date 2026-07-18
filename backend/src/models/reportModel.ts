@@ -74,9 +74,8 @@ export const getInstitutionSummaryData = async (fromDate: string, toDate: string
        COALESCE(SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END), 0) as absentCount,
        COALESCE(SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END), 0) as lateCount
     FROM departments d
-    JOIN users u ON d.id = u.department_id
+    LEFT JOIN users u ON d.id = u.department_id AND u.role = 'student' AND u.is_active = 1
     LEFT JOIN attendance a ON u.id = a.student_id AND a.date BETWEEN ? AND ?
-    WHERE u.role = 'student' AND u.is_active = 1
   `;
   const params: any[] = [fromDate, toDate];
 
