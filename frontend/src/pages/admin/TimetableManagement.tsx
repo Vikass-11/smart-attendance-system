@@ -12,7 +12,7 @@ interface Department {
   name: string;
 }
 
-const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
 const TimetableManagement = () => {
   const [courses, setCourses] = useState<Course[]>([]);
