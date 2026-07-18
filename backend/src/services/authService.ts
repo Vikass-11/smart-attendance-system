@@ -47,3 +47,9 @@ export const loginUser = async (email: string, password_raw: string): Promise<an
     isSystemAdmin: !!user.is_system_admin,
   };
 };
+
+// 🌟 THE FIX: Pulls active structural entries directly from your MySQL instance
+export const getAllDepartments = async (): Promise<any[]> => {
+  const [rows]: any = await db.query(`SELECT id, name FROM departments ORDER BY name ASC`);
+  return rows;
+};
