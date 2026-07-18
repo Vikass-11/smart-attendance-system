@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, User, Mail, Lock, Building2 } from 'lucide-react';
 import apiClient from '../api/axiosClient';
+import type { AxiosError } from 'axios';
 
 interface DepartmentRecord {
   id: number;
@@ -29,7 +30,7 @@ const Register = () => {
         const response = await apiClient.get('/departments');
         const data = response.data?.data ?? response.data ?? [];
         setDepartments(Array.isArray(data) ? data : []);
-      } catch (err) {
+      } catch {
         try {
           // Fallback route context check
           const fallbackRes = await apiClient.get('/auth/departments');
@@ -65,8 +66,9 @@ const Register = () => {
       });
 
       navigate('/login');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed. Please check your entries.');
+    } catch (err) {
+      const errorPayload = err as AxiosError<{ error?: string }>;
+      setError(errorPayload.response?.data?.error || 'Registration failed. Please check your entries.');
     } finally {
       setLoading(false);
     }

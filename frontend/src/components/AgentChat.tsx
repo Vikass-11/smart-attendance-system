@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Check, XCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
