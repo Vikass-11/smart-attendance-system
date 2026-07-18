@@ -338,7 +338,7 @@ const CourseManagement = () => {
                                 : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                             }`}
                         >
-                          <span className={`w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors
+                          <span className={`w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors pointer-events-none
                             ${
                               isDirty
                                 ? 'border-indigo-500 bg-indigo-500'
@@ -346,7 +346,6 @@ const CourseManagement = () => {
                                 ? 'border-emerald-500 bg-emerald-500'
                                 : 'border-slate-300 dark:border-slate-600'
                             }`}
-                            onClick={() => handlePendingToggle(c.id, s.id)}
                           >
                             {isChecked && (
                               <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
