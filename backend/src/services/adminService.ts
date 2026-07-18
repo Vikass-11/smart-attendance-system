@@ -10,3 +10,4 @@ export const changeUserRole = async (id: number, role: string, departmentId: num
 export const changeUserDepartment = async (id: number, departmentId: number | null) =>
   adminModel.updateUserDepartment(id, departmentId);
 export const deactivateUser = async (id: number) => adminModel.deleteUserSoft(id);
+export const removeDepartment = async (id: number) => adminModel.deleteDepartment(id);

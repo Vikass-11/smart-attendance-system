@@ -184,3 +184,19 @@ export const removeUser = async (req: AuthenticatedRequest, res: Response, next:
     next(new AppError('Failed to delete user', 500, 'USER_DELETE_FAILED'));
   }
 };
+
+export const removeDepartment = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  const { id } = req.params;
+  try {
+    await adminService.removeDepartment(Number(id));
+    sendSuccess(res, {
+      message: 'Department deleted successfully',
+    });
+  } catch (error: any) {
+    if (error.code === 'ER_ROW_IS_REFERENCED' || error.code === 'ER_ROW_IS_REFERENCED_2') {
+      next(new AppError('Cannot delete department because it still has courses assigned to it. Please delete the courses first.', 409, 'DEPARTMENT_REFERENCED'));
+      return;
+    }
+    next(new AppError('Failed to delete department', 500, 'DEPARTMENT_DELETE_FAILED'));
+  }
+};

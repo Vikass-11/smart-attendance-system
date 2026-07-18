@@ -117,3 +117,10 @@ export const updateUserDepartment = async (id: number, departmentId: number | nu
 export const deleteUserSoft = async (id: number): Promise<void> => {
   await db.query('UPDATE users SET is_active = 0 WHERE id = ?', [id]);
 };
+
+export const deleteDepartment = async (id: number): Promise<void> => {
+  // First set department_id to NULL for all users in this department
+  await db.query('UPDATE users SET department_id = NULL WHERE department_id = ?', [id]);
+  // Then delete the department (will fail if courses still reference it)
+  await db.query('DELETE FROM departments WHERE id = ?', [id]);
+};

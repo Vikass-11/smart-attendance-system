@@ -9,6 +9,7 @@ router.get('/users', verifyToken, requireRole('faculty', 'admin'), adminControll
 router.use(verifyToken, requireRole('admin'));
 router.post('/departments', adminController.addDepartment);
 router.get('/departments', adminController.listDepartments);
+router.delete('/departments/:id', adminController.removeDepartment);
 router.patch('/users/:id', adminController.updateUser);
 router.delete('/users/:id', adminController.removeUser);
 
