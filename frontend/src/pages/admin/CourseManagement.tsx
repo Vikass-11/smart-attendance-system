@@ -30,6 +30,8 @@ const CourseManagement = () => {
   const [facultyList, setFacultyList] = useState<FacultyUser[]>([]);
   const [students, setStudents] = useState<StudentUser[]>([]);
   const [enrolledMap, setEnrolledMap] = useState<Record<number, number[]>>({});
+  const [pendingEnrollments, setPendingEnrollments] = useState<Record<number, number[]>>({});
+  const [savingEnrollments, setSavingEnrollments] = useState<Record<number, boolean>>({});
   const [expandedCourseId, setExpandedCourseId] = useState<number | null>(null);
   const [editingCourseId, setEditingCourseId] = useState<number | null>(null);
   const [editFacultyId, setEditFacultyId] = useState<string>('');
@@ -116,8 +118,37 @@ const CourseManagement = () => {
       return;
     }
     setExpandedCourseId(courseId);
-    if (!enrolledMap[courseId]) {
-      loadEnrollments(courseId);
+    void loadEnrollments(courseId);
+  };
+
+  const handlePendingToggle = (courseId: number, studentId: number) => {
+    setPendingEnrollments((prev) => {
+      const current = prev[courseId] ?? [...(enrolledMap[courseId] ?? [])];
+      const isChecked = current.includes(studentId);
+      return {
+        ...prev,
+        [courseId]: isChecked ? current.filter((id) => id !== studentId) : [...current, studentId],
+      };
+    });
+  };
+
+  const saveEnrollments = async (courseId: number) => {
+    setSavingEnrollments((prev) => ({ ...prev, [courseId]: true }));
+    const original = enrolledMap[courseId] ?? [];
+    const pending = pendingEnrollments[courseId] ?? original;
+    const toAdd = pending.filter((id) => !original.includes(id));
+    const toRemove = original.filter((id) => !pending.includes(id));
+    try {
+      await Promise.all([
+        ...toAdd.map((studentId) => apiClient.post(`/courses/${courseId}/enroll`, { studentId })),
+        ...toRemove.map((studentId) => apiClient.delete(`/courses/${courseId}/students/${studentId}`)),
+      ]);
+      await loadEnrollments(courseId);
+      setPendingEnrollments((prev) => { const next = { ...prev }; delete next[courseId]; return next; });
+    } catch (err) {
+      console.error('Failed to save enrollments', err);
+    } finally {
+      setSavingEnrollments((prev) => ({ ...prev, [courseId]: false }));
     }
   };
 
@@ -142,18 +173,7 @@ const CourseManagement = () => {
     }
   };
 
-  const handleToggleEnroll = async (courseId: number, studentId: number, isEnrolled: boolean) => {
-    try {
-      if (isEnrolled) {
-        await apiClient.delete(`/courses/${courseId}/students/${studentId}`);
-      } else {
-        await apiClient.post(`/courses/${courseId}/enroll`, { studentId });
-      }
-      await loadEnrollments(courseId);
-    } catch (err) {
-      console.error('Failed to update enrollment', err);
-    }
-  };
+  // Enrollment is now managed via handlePendingToggle + saveEnrollments
 
   const getDeptName = (id: number) => departments.find((d) => d.id === id)?.name || '-';
   const getFacultyName = (id: number | null) => facultyList.find((f) => f.id === id)?.name || 'Unassigned';
@@ -277,22 +297,71 @@ const CourseManagement = () => {
               </div>
 
               {expandedCourseId === c.id && (
-                <div className="border-t border-slate-100 dark:border-slate-800 p-3 bg-slate-50 dark:bg-slate-900/50">
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Enroll / Unenroll Students</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-48 overflow-y-auto">
+                <div className="border-t border-slate-100 dark:border-slate-800 p-4 bg-slate-50 dark:bg-slate-900/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Enroll / Unenroll Students</p>
+                    <div className="flex items-center gap-2">
+                      {pendingEnrollments[c.id] !== undefined && (
+                        <button
+                          onClick={() => setPendingEnrollments((prev) => { const next = { ...prev }; delete next[c.id]; return next; })}
+                          className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 px-2 py-1 rounded"
+                        >
+                          Reset
+                        </button>
+                      )}
+                      <button
+                        onClick={() => void saveEnrollments(c.id)}
+                        disabled={savingEnrollments[c.id] || pendingEnrollments[c.id] === undefined}
+                        className="text-xs bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded-lg font-medium transition-colors"
+                      >
+                        {savingEnrollments[c.id] ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto pr-1">
                     {students.map((s) => {
-                      const isEnrolled = (enrolledMap[c.id] || []).includes(s.id);
+                      const pending = pendingEnrollments[c.id];
+                      const isChecked = pending !== undefined
+                        ? pending.includes(s.id)
+                        : (enrolledMap[c.id] ?? []).includes(s.id);
+                      const isDirty = pending !== undefined &&
+                        isChecked !== (enrolledMap[c.id] ?? []).includes(s.id);
                       return (
                         <label
                           key={s.id}
-                          className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-950 rounded px-2 py-1.5 border border-slate-100 dark:border-slate-800 cursor-pointer"
+                          className={`flex items-center gap-2.5 text-xs rounded-lg px-3 py-2 border cursor-pointer transition-colors select-none
+                            ${
+                              isDirty
+                                ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-900 dark:text-indigo-200'
+                                : isChecked
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-slate-800 dark:text-slate-200'
+                                : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                            }`}
                         >
+                          <span className={`w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors
+                            ${
+                              isDirty
+                                ? 'border-indigo-500 bg-indigo-500'
+                                : isChecked
+                                ? 'border-emerald-500 bg-emerald-500'
+                                : 'border-slate-300 dark:border-slate-600'
+                            }`}
+                            onClick={() => handlePendingToggle(c.id, s.id)}
+                          >
+                            {isChecked && (
+                              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </span>
                           <input
                             type="checkbox"
-                            checked={isEnrolled}
-                            onChange={() => handleToggleEnroll(c.id, s.id, isEnrolled)}
+                            className="sr-only"
+                            checked={isChecked}
+                            onChange={() => handlePendingToggle(c.id, s.id)}
                           />
-                          {s.name} <span className="text-slate-400">({s.email})</span>
+                          <span className="font-medium">{s.name}</span>
+                          <span className="text-slate-400 dark:text-slate-500 truncate">({s.email})</span>
                         </label>
                       );
                     })}
