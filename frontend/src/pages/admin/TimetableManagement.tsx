@@ -19,9 +19,8 @@ const TimetableManagement = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [slots, setSlots] = useState<Record<number, TimetableSlot[]>>({});
   const [selectedDeptId, setSelectedDeptId] = useState<number | ''>('');
-  const [showTodayOnly, setShowTodayOnly] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<string>('');
   
-  const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -159,16 +158,16 @@ const TimetableManagement = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
           <h2 className="font-semibold text-slate-900 dark:text-white">Current Schedule</h2>
           <div className="flex items-center gap-3">
-             <button
-                onClick={() => setShowTodayOnly(!showTodayOnly)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
-                  showTodayOnly
-                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-300'
-                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                Today Only
-              </button>
+             <select
+               value={selectedDay}
+               onChange={(e) => setSelectedDay(e.target.value)}
+               className="border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-1.5 text-sm text-slate-900 dark:text-white"
+             >
+               <option value="" className="dark:bg-slate-900">All Days</option>
+               {DAYS.map(d => (
+                 <option key={d} value={d} className="dark:bg-slate-900 capitalize">{d}</option>
+               ))}
+             </select>
              <select
                value={selectedDeptId}
                onChange={(e) => setSelectedDeptId(e.target.value === '' ? '' : Number(e.target.value))}
@@ -185,19 +184,19 @@ const TimetableManagement = () => {
           {courses
             .filter(c => selectedDeptId === '' || c.departmentId === selectedDeptId)
             .filter(c => {
-              if (!showTodayOnly) return true;
+              if (selectedDay === '') return true;
               const cSlots = slots[c.id] || [];
-              return cSlots.some(s => s.dayOfWeek === todayDayName);
+              return cSlots.some(s => s.dayOfWeek === selectedDay);
             })
             .map((c) => {
               const cSlots = slots[c.id] || [];
-              const filteredSlots = showTodayOnly ? cSlots.filter(s => s.dayOfWeek === todayDayName) : cSlots;
+              const filteredSlots = selectedDay !== '' ? cSlots.filter(s => s.dayOfWeek === selectedDay) : cSlots;
               
               return (
                 <div key={c.id}>
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">{c.code} - {c.name}</p>
                   {filteredSlots.length === 0 ? (
-                    <p className="text-xs text-slate-400 ml-2">No slots scheduled{showTodayOnly ? ' today' : ''}.</p>
+                    <p className="text-xs text-slate-400 ml-2">No slots scheduled{selectedDay !== '' ? ` for ${selectedDay}` : ''}.</p>
                   ) : (
                     <div className="space-y-1 ml-2">
                       {filteredSlots.map((s) => (
