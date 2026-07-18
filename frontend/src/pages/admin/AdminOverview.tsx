@@ -29,7 +29,7 @@ const AdminOverview = () => {
           setSummary(summaryObj);
         } catch (err) {
           console.error('Failed to load summary', err);
-        } bits: {
+        } finally {
           setLoading(false);
         }
       })();
