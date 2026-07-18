@@ -247,9 +247,9 @@ const CourseManagement = () => {
                           onChange={(e) => setEditFacultyId(e.target.value)}
                           className="border border-slate-300 dark:border-slate-700 bg-transparent rounded px-1 py-0.5 text-xs text-slate-900 dark:text-white"
                         >
-                          <option value="">Unassigned</option>
+                          <option value="" className="dark:bg-slate-900">Unassigned</option>
                           {facultyList.map((f) => (
-                            <option key={f.id} value={f.id}>{f.name}</option>
+                            <option key={f.id} value={f.id} className="dark:bg-slate-900">{f.name}</option>
                           ))}
                         </select>
                         <button onClick={() => saveEditFaculty(c.id)} className="text-indigo-600 hover:underline">Save</button>
