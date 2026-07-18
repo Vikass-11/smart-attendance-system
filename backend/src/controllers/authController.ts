@@ -169,3 +169,26 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
     next(new AppError('Logout failed', 500, 'LOGOUT_FAILED'));
   }
 };
+
+export const getPublicDepartments = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    // Queries your database for all existing departments
+    // If using Prisma, it looks like: const departments = await prisma.department.findMany();
+    // If using Sequelize: const departments = await Department.findAll();
+    
+    // Replace the line below with your actual database fetching logic:
+    const departments = await authService.getAllDepartments(); 
+
+    sendSuccess(res, {
+      message: 'Public departments list fetched successfully',
+      data: departments,
+    });
+  } catch (error) {
+    console.error('Error fetching public departments list:', error);
+    next(error);
+  }
+};
