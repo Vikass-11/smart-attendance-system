@@ -89,6 +89,8 @@ export const updateCourseDetails = async (id: number, data: Partial<CourseData>)
 };
 
 export const deleteCourseById = async (id: number): Promise<void> => {
+  await db.query('DELETE FROM timetable_slots WHERE course_id = ?', [id]);
+  await db.query('DELETE FROM course_enrollments WHERE course_id = ?', [id]);
   await db.query('DELETE FROM courses WHERE id = ?', [id]);
 };
 

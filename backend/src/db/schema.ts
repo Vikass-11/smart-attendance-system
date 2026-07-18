@@ -94,7 +94,7 @@ export const courseEnrollments = mysqlTable('course_enrollments', {
 export const timetableSlots = mysqlTable('timetable_slots', {
   id: int('id').autoincrement().primaryKey(),
   courseId: int('course_id').notNull().references(() => courses.id),
-  dayOfWeek: mysqlEnum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']).notNull(),
+  dayOfWeek: mysqlEnum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']).notNull(),
   startTime: time('start_time').notNull(),
   endTime: time('end_time').notNull(),
   room: varchar('room', { length: 50 }),
