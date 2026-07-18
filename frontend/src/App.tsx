@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import StudentDashboard from './pages/student/StudentDashboard';
+import StudentOverview from './pages/student/StudentOverview';
+import ApplyLeave from './pages/student/ApplyLeave';
+import ViewAttendance from './pages/student/ViewAttendance';
 import FacultyOverview from './pages/faculty/FacultyOverview';
 import MarkAttendance from './pages/faculty/MarkAttendance';
 import LeaveRequests from './pages/faculty/LeaveRequests';
@@ -33,33 +35,38 @@ function App() {
   return (
     <ErrorBoundary>
       <Routes>
+        {/* Student Routes */}
         {appUser.role === 'student' && (
           <>
-            <Route path="/dashboard" element={<StudentDashboard />} />
-            <Route path="*" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard" element={<StudentOverview />} />
+            <Route path="/dashboard/my-attendance" element={<ViewAttendance />} />
+            <Route path="/dashboard/apply-leave" element={<ApplyLeave />} />
             <Route path="/dashboard/timetable" element={<MyTimetable />} />
-
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </>
         )}
+
+        {/* Faculty Routes */}
         {appUser.role === 'faculty' && (
           <>
             <Route path="/dashboard" element={<FacultyOverview />} />
             <Route path="/dashboard/attendance" element={<MarkAttendance />} />
             <Route path="/dashboard/leave" element={<LeaveRequests />} />
-            <Route path="*" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard/timetable" element={<MyTimetable />} />
-
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </>
         )}
+
+        {/* Admin Routes */}
         {appUser.role === 'admin' && (
           <>
             <Route path="/dashboard" element={<AdminOverview />} />
             <Route path="/dashboard/departments" element={<Departments />} />
             <Route path="/dashboard/users" element={<UserManagement />} />
             <Route path="/dashboard/reports" element={<Reports />} />
-            <Route path="*" element={<Navigate to="/dashboard" />} />
             <Route path="/dashboard/courses" element={<CourseManagement />} />
             <Route path="/dashboard/timetable" element={<TimetableManagement />} />
+            <Route path="*" element={<Navigate to="/dashboard" />} />
           </>
         )}
       </Routes>
