@@ -191,6 +191,7 @@ export const removeDepartment = async (req: AuthenticatedRequest, res: Response,
     await adminService.removeDepartment(Number(id));
     sendSuccess(res, {
       message: 'Department deleted successfully',
+      data: null,
     });
   } catch (error: any) {
     if (error.code === 'ER_ROW_IS_REFERENCED' || error.code === 'ER_ROW_IS_REFERENCED_2') {
