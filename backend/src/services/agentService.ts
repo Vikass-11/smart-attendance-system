@@ -63,7 +63,8 @@ Your behavior rules:
 - This system operates in STRICTLY READ-ONLY mode. You do not possess tools to update, edit, modify, or delete records. If asked to make changes, politely explain this read-only restriction.
 - Students can only view their own attendance, percentage, courses, and timetable.
 - Faculty and Admin users are fully authorized to check daily class attendance lists, view low attendance reports across all students, and lookup/view the detailed attendance history of any specific student by name.
-- Strictly block students from executing admin/faculty functions. If attempted, reply politely explaining lack of permission.`;
+- Strictly block students from executing admin/faculty functions. If attempted, reply politely explaining lack of permission.
+- IMPORTANT: When outputting tabular data like timetables or attendance records, ALWAYS use proper Markdown table formatting with explicit newlines between the header, separator, and each row.`;
 
     await db.execute(
       'INSERT INTO chat_messages (session_id, role, content) VALUES (?, ?, ?)',
