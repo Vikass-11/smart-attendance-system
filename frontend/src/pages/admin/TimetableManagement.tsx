@@ -7,11 +7,21 @@ import { timetableSlotSchema } from '../../schemas/courseSchema';
 import type { TimetableSlotFormInput, TimetableSlotFormData } from '../../schemas/courseSchema';
 import type { Course, TimetableSlot } from '../../types/course';
 
+interface Department {
+  id: number;
+  name: string;
+}
+
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
 
 const TimetableManagement = () => {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [slots, setSlots] = useState<Record<number, TimetableSlot[]>>({});
+  const [selectedDeptId, setSelectedDeptId] = useState<number | ''>('');
+  const [showTodayOnly, setShowTodayOnly] = useState(false);
+  
+  const todayDayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -28,9 +38,13 @@ const TimetableManagement = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const coursesRes = await apiClient.get('/courses');
+      const [coursesRes, deptRes] = await Promise.all([
+        apiClient.get('/courses'),
+        apiClient.get('/admin/departments')
+      ]);
       const courseList: Course[] = coursesRes.data;
       setCourses(courseList);
+      setDepartments(deptRes.data?.data ?? deptRes.data ?? []);
 
       const slotsResults = await Promise.all(
         courseList.map((c) => apiClient.get(`/timetable/course/${c.id}`))
@@ -142,29 +156,65 @@ const TimetableManagement = () => {
       </div>
 
       <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
-        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Current Schedule</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+          <h2 className="font-semibold text-slate-900 dark:text-white">Current Schedule</h2>
+          <div className="flex items-center gap-3">
+             <button
+                onClick={() => setShowTodayOnly(!showTodayOnly)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${
+                  showTodayOnly
+                    ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-300'
+                    : 'bg-white border-slate-200 text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                Today Only
+              </button>
+             <select
+               value={selectedDeptId}
+               onChange={(e) => setSelectedDeptId(e.target.value === '' ? '' : Number(e.target.value))}
+               className="border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-1.5 text-sm text-slate-900 dark:text-white"
+             >
+               <option value="" className="dark:bg-slate-900">All Departments</option>
+               {departments.map(d => (
+                 <option key={d.id} value={d.id} className="dark:bg-slate-900">{d.name}</option>
+               ))}
+             </select>
+          </div>
+        </div>
         <div className="space-y-4">
-          {courses.map((c) => (
-            <div key={c.id}>
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">{c.code} - {c.name}</p>
-              {(!slots[c.id] || slots[c.id].length === 0) ? (
-                <p className="text-xs text-slate-400 ml-2">No slots scheduled.</p>
-              ) : (
-                <div className="space-y-1 ml-2">
-                  {slots[c.id].map((s) => (
-                    <div key={s.id} className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400 border-b border-slate-50 dark:border-slate-800/50 pb-1">
-                      <span className="capitalize">
-                        {s.dayOfWeek} • {s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)} {s.room && `• ${s.room}`}
-                      </span>
-                      <button onClick={() => handleDeleteSlot(s.id)} className="text-red-600 hover:underline">
-                        Delete
-                      </button>
+          {courses
+            .filter(c => selectedDeptId === '' || c.departmentId === selectedDeptId)
+            .filter(c => {
+              if (!showTodayOnly) return true;
+              const cSlots = slots[c.id] || [];
+              return cSlots.some(s => s.dayOfWeek === todayDayName);
+            })
+            .map((c) => {
+              const cSlots = slots[c.id] || [];
+              const filteredSlots = showTodayOnly ? cSlots.filter(s => s.dayOfWeek === todayDayName) : cSlots;
+              
+              return (
+                <div key={c.id}>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">{c.code} - {c.name}</p>
+                  {filteredSlots.length === 0 ? (
+                    <p className="text-xs text-slate-400 ml-2">No slots scheduled{showTodayOnly ? ' today' : ''}.</p>
+                  ) : (
+                    <div className="space-y-1 ml-2">
+                      {filteredSlots.map((s) => (
+                        <div key={s.id} className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400 border-b border-slate-50 dark:border-slate-800/50 pb-1">
+                          <span className="capitalize">
+                            {s.dayOfWeek} • {s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)} {s.room && `• ${s.room}`}
+                          </span>
+                          <button onClick={() => handleDeleteSlot(s.id)} className="text-red-600 hover:underline">
+                            Delete
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              );
+            })}
         </div>
       </div>
     </Layout>
