@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Users, Trash2, ShieldAlert, CheckCircle2 } from 'lucide-react';
+// 🌟 FIXED: Removed 'Users' from the import line below to prevent the TS6133 build error
+import { Trash2, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
 import type { AxiosError } from 'axios';
@@ -9,7 +10,7 @@ interface UserRecord {
   name: string;
   email: string;
   role: 'admin' | 'faculty' | 'student';
-  department?: string | { name: string }; // Captures both flat string models or nested object records
+  department?: string | { name: string };
 }
 
 interface DepartmentRecord {
@@ -27,7 +28,6 @@ const UserManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Load users and department directories simultaneously
   const fetchDataDirectives = async () => {
     try {
       setError(null);
@@ -50,25 +50,23 @@ const UserManagement = () => {
     void fetchDataDirectives();
   }, []);
 
-  // Handler to persist role or department changes immediately to the backend database
   const handleUpdateUserProperties = async (userId: string | number, parameters: { role?: string; department?: string }) => {
-  setError(null);
-  setSuccess(null);
-  try {
-    await apiClient.patch(`/admin/users/${userId}`, parameters);
-    setSuccess('User security configuration updated successfully.');
-    
-    // Update local UI state array instantly with explicit type assertion
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === userId ? ({ ...user, ...parameters } as UserRecord) : user
-      )
-    );
-  } catch (err) {
-    const errorPayload = err as AxiosError<{ error?: string }>;
-    setError(errorPayload.response?.data?.error || 'Failed to update target account properties.');
-  }
-};
+    setError(null);
+    setSuccess(null);
+    try {
+      await apiClient.patch(`/admin/users/${userId}`, parameters);
+      setSuccess('User security configuration updated successfully.');
+      
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === userId ? ({ ...user, ...parameters } as UserRecord) : user
+        )
+      );
+    } catch (err) {
+      const errorPayload = err as AxiosError<{ error?: string }>;
+      setError(errorPayload.response?.data?.error || 'Failed to update target account properties.');
+    }
+  };
 
   const handleDeleteUser = async (userId: string | number, name: string) => {
     if (!confirm(`Are you absolutely sure you want to delete access for ${name}?`)) return;
@@ -84,14 +82,12 @@ const UserManagement = () => {
     }
   };
 
-  // Extract flat department text representation safely
   const resolveUserDepartmentValue = (user: UserRecord): string => {
     if (!user.department) return '';
     if (typeof user.department === 'object') return user.department.name || '';
     return user.department;
   };
 
-  // Filter computations
   const filteredUsers = users.filter((user) => {
     const matchesRole = selectedRoleFilter === 'all' || user.role === selectedRoleFilter;
     const matchesSearch = 
@@ -102,14 +98,12 @@ const UserManagement = () => {
 
   return (
     <Layout>
-      {/* Title & Header Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">User Management</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage roles and access permissions across the institution.</p>
         </div>
 
-        {/* Filter Controls Bar */}
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <select
             value={selectedRoleFilter}
@@ -132,7 +126,6 @@ const UserManagement = () => {
         </div>
       </div>
 
-      {/* Alert Notices */}
       {error && (
         <div className="mb-4 flex items-center gap-2 p-3 text-xs font-semibold text-red-800 bg-red-50 border border-red-200 rounded-lg dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/30">
           <ShieldAlert className="w-4 h-4 shrink-0" />
@@ -147,7 +140,6 @@ const UserManagement = () => {
         </div>
       )}
 
-      {/* Dynamic Main Workspace Renderer */}
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[320px] w-full">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-slate-900 dark:border-slate-800 dark:border-t-white"></div>
@@ -158,7 +150,6 @@ const UserManagement = () => {
           No registered records match your lookup parameters.
         </div>
       ) : (
-        /* Responsive Table Container Grid Wrapper */
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto text-sm">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
@@ -176,10 +167,9 @@ const UserManagement = () => {
 
                 return (
                   <tr key={user.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10 transition-colors">
-                    {/* User Metadata Profile Column */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 h-9 w-9 w-9 shrink-0 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold text-xs uppercase">
+                        <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold text-xs uppercase">
                           {user.name.charAt(0)}
                         </div>
                         <div>
@@ -191,7 +181,6 @@ const UserManagement = () => {
                       </div>
                     </td>
 
-                    {/* Badge Column for Current Assigned Role */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${
                         user.role === 'admin' 
@@ -204,7 +193,6 @@ const UserManagement = () => {
                       </span>
                     </td>
 
-                    {/* Department Dropdown Assignment Column */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       {user.role === 'admin' ? (
                         <span className="text-xs text-slate-400 italic">Global System Scope</span>
@@ -224,7 +212,6 @@ const UserManagement = () => {
                       )}
                     </td>
 
-                    {/* Quick Role Shift Action Selection */}
                     <td className="px-4 py-4 whitespace-nowrap">
                       <select
                         value={user.role}
@@ -237,7 +224,6 @@ const UserManagement = () => {
                       </select>
                     </td>
 
-                    {/* Complete Account Access Termination Row Action */}
                     <td className="px-6 py-4 text-center whitespace-nowrap">
                       <button
                         onClick={() => handleDeleteUser(user.id, user.name)}
