@@ -72,7 +72,13 @@ const CourseManagement = () => {
   const loadEnrollments = async (courseId: number) => {
     try {
       const res = await apiClient.get(`/courses/${courseId}/students`);
-      const ids = ((res.data ?? []) as Array<{ studentId: number }>).map((e) => e.studentId);
+      const raw = (res.data ?? []) as Array<Record<string, unknown>>;
+      const ids = raw
+        .map((e) => {
+          const raw_id = e.studentId ?? e.student_id ?? e.id;
+          return typeof raw_id === 'number' ? raw_id : Number(raw_id);
+        })
+        .filter((n) => !isNaN(n) && n > 0);
       setEnrolledMap((prev) => ({ ...prev, [courseId]: ids }));
     } catch (err) {
       console.error('Failed to load enrollments', err);
