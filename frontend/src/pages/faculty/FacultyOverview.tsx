@@ -86,71 +86,65 @@ const FacultyOverview = () => {
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome, {appUser?.name}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Here's what's happening in your classes today.</p>
+      <div className="page-header">
+        <h1 className="page-title">Welcome, {appUser?.name}</h1>
+        <p className="page-subtitle">Here&apos;s what&apos;s happening in your classes today.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+      <div className="stat-grid-3">
         {[
           { label: 'Total Students', value: studentCount, line: 'from-indigo-500 to-cyan-400' },
           { label: 'Pending Leaves', value: pendingCount, line: 'from-amber-500 to-orange-400' },
-          { label: 'Attendance Breaches (<75%)', value: lowAttendance.length, line: 'from-red-500 to-pink-400' }
+          { label: 'Below 75%', value: lowAttendance.length, line: 'from-red-500 to-pink-400' },
         ].map((card, i) => (
-          <div key={i} className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 relative overflow-hidden shadow-sm">
-            <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${card.line}`} />
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{card.label}</span>
-            <p className="text-3xl font-bold mt-3 text-slate-900 dark:text-white tracking-tight">{card.value}</p>
+          <div key={i} className="stat-card">
+            <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${card.line}`} />
+            <span className="stat-card-label">{card.label}</span>
+            <p className="stat-card-value">{card.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-        <div className="space-y-4">
-          <Link
-            to="/dashboard/attendance"
-            className="group bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all flex items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 p-3 rounded-xl transition-transform group-hover:scale-105">
-                <CalendarCheck className="w-5 h-5" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 items-start">
+        <div className="space-y-3">
+          <Link to="/dashboard/attendance" className="group action-card">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="action-card-icon bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400">
+                <CalendarCheck className="w-4 h-4" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-semibold text-sm text-slate-900 dark:text-white">Mark Attendance</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Record checkpoint logs for your student groups</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Record attendance for your students</p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
           </Link>
 
-          <Link
-            to="/dashboard/leave"
-            className="group bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all flex items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-4">
-              <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 p-3 rounded-xl transition-transform group-hover:scale-105">
-                <ClipboardList className="w-5 h-5" />
+          <Link to="/dashboard/leave" className="group action-card">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="action-card-icon bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400">
+                <ClipboardList className="w-4 h-4" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-semibold text-sm text-slate-900 dark:text-white">Review Leave Requests</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{pendingCount} request(s) waiting for validation</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{pendingCount} request(s) waiting</p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
         {lowAttendance.length > 0 && (
-          <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
-              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Compliance Risk Watchlist</h2>
+          <div className="panel-card">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-200">Low Attendance Watchlist</h2>
             </div>
-            <div className="space-y-1 max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 pr-1">
+            <div className="space-y-1 max-h-52 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
               {lowAttendance.map((s) => (
-                <div key={s.id} className="flex justify-between items-center py-2.5 first:pt-0 last:pb-0">
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{s.name}</span>
-                  <span className="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded">
+                <div key={s.id} className="flex justify-between items-center gap-2 py-2 first:pt-0 last:pb-0">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{s.name}</span>
+                  <span className="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded shrink-0">
                     {s.percentage}%
                   </span>
                 </div>

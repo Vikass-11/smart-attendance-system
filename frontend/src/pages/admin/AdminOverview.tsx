@@ -52,49 +52,45 @@ const AdminOverview = () => {
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome, {appUser?.name}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Institution-wide overview for this month.</p>
+      <div className="page-header">
+        <h1 className="page-title">Welcome, {appUser?.name}</h1>
+        <p className="page-subtitle">Institution-wide overview for this month.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div className="stat-grid">
         {[
           { label: 'Total Students', value: summary?.total_students ?? 0, line: 'from-indigo-500 to-cyan-400' },
           { label: 'Overall Attendance', value: `${summary?.overall_percentage ?? 0}%`, line: 'from-emerald-500 to-green-400' },
-          { label: 'Present (This Month)', value: summary?.total_present ?? 0, line: 'from-indigo-500 to-purple-400' },
-          { label: 'Absent (This Month)', value: summary?.total_absent ?? 0, line: 'from-red-500 to-pink-400' }
+          { label: 'Present (Month)', value: summary?.total_present ?? 0, line: 'from-indigo-500 to-purple-400' },
+          { label: 'Absent (Month)', value: summary?.total_absent ?? 0, line: 'from-red-500 to-pink-400' },
         ].map((card, i) => (
-          <div key={i} className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 relative overflow-hidden shadow-sm flex flex-col justify-between">
-            <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${card.line}`} />
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{card.label}</span>
-            <p className="text-3xl font-bold mt-3 text-slate-900 dark:text-white tracking-tight">{card.value}</p>
+          <div key={i} className="stat-card flex flex-col justify-between">
+            <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${card.line}`} />
+            <span className="stat-card-label">{card.label}</span>
+            <p className="stat-card-value">{card.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div className="action-grid">
         {[
           { to: '/dashboard/departments', icon: Building2, color: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 dark:text-indigo-400', title: 'Departments', desc: 'Manage institution departments' },
           { to: '/dashboard/users', icon: Users, color: 'text-cyan-600 bg-cyan-50 dark:bg-cyan-950/30 dark:text-cyan-400', title: 'Users', desc: 'Manage students, faculty, and admins' },
-          { to: '/dashboard/reports', icon: FileText, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400', title: 'Reports', desc: 'Department breakdown and exports' }
+          { to: '/dashboard/reports', icon: FileText, color: 'text-amber-600 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400', title: 'Reports', desc: 'Department breakdown and exports' },
         ].map((link, i) => {
           const Icon = link.icon;
           return (
-            <Link
-              key={i}
-              to={link.to}
-              className="group bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all flex items-center justify-between gap-4"
-            >
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-xl transition-transform group-hover:scale-105 ${link.color}`}>
-                  <Icon className="w-5 h-5" />
+            <Link key={i} to={link.to} className="group action-card">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`action-card-icon ${link.color}`}>
+                  <Icon className="w-4 h-4" />
                 </div>
-                <div>
-                  <p className="font-semibold text-sm text-slate-900 dark:text-white">{link.title}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{link.desc}</p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{link.title}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{link.desc}</p>
                 </div>
               </div>
-              <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
             </Link>
           );
         })}

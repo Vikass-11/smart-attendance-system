@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'; 
+import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sun, Moon, LogOut, ArrowLeft } from 'lucide-react';
 import Sidebar from './Sidebar';
+import AgentChat from './AgentChat';
 import apiClient from '../api/axiosClient';
 
 interface LayoutProps {
@@ -13,13 +14,13 @@ const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Initialize theme state based on local storage configurations
   const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark' || 
-      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return (
+      localStorage.getItem('theme') === 'dark' ||
+      (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    );
   });
 
-  // Keep track of theme shifts on root HTML node
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -30,7 +31,6 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, [darkMode]);
 
-  // Session termination clearance handler
   const handleLogout = async () => {
     if (!confirm('Are you sure you want to log out of the session?')) return;
     try {
@@ -43,56 +43,45 @@ const Layout = ({ children }: LayoutProps) => {
     }
   };
 
-  // Condition to check if the user is on the main landing page of the dashboard
-  const isMainOverviewPage = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
+  const isMainOverviewPage =
+    location.pathname === '/dashboard' || location.pathname === '/dashboard/';
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 pb-16 md:pb-0 transition-colors duration-200">
-      
-      {/* 1. Sidebar Navigation Column (Transforms into bottom flex row on mobile) */}
+    <div className="flex flex-col md:flex-row min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       <Sidebar />
 
-      {/* 2. Core Workspace Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        
-        {/* Unified Top Control Bar */}
-        <header className="flex justify-between items-center px-6 py-3.5 border-b border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950 transition-colors shadow-sm">
-          
-          {/* Left Action Slot: Contextual Navigation Back Button */}
+      <div className="flex-1 flex flex-col min-w-0 md:min-h-screen">
+        <header className="sticky top-0 z-30 flex justify-between items-center px-4 py-2.5 md:px-5 md:py-3 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm transition-colors shadow-sm">
           <div>
             {!isMainOverviewPage ? (
               <button
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white transition-all outline-none"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs md:text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-slate-900 dark:hover:text-white transition-all outline-none"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Back
+                <ArrowLeft className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">Back to </span>Overview
               </button>
             ) : (
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Institutional Overview
+              <div className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Overview
               </div>
             )}
           </div>
 
-          {/* Right Action Slot: Mode Toggler & System Access Buttons */}
-          <div className="flex items-center gap-3">
-            
-            {/* Dark Mode Control Handle */}
+          <div className="flex items-center gap-2 md:gap-3">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors border border-transparent outline-none"
-              title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              className="p-1.5 md:p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors border border-transparent outline-none"
+              title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {darkMode ? <Sun className="w-4 h-4 md:w-5 md:h-5" /> : <Moon className="w-4 h-4 md:w-5 md:h-5" />}
             </button>
 
-            <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-800" />
+            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
 
-            {/* Secure Logout Action */}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all outline-none"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all outline-none"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Logout</span>
@@ -100,11 +89,12 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </header>
 
-        {/* 3. View Port Content Delivery Zone */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-5 lg:p-6 pb-24 md:pb-6 overflow-y-auto overflow-x-hidden w-full max-w-7xl mx-auto">
           {children}
         </main>
       </div>
+
+      <AgentChat />
     </div>
   );
 };

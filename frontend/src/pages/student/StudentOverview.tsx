@@ -67,74 +67,66 @@ const StudentOverview = () => {
 
   return (
     <Layout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Student Dashboard</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Overview of your standing and validation requirements.</p>
+      <div className="page-header">
+        <h1 className="page-title">Student Dashboard</h1>
+        <p className="page-subtitle">Overview of your attendance and leave status.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 relative overflow-hidden shadow-sm flex flex-col justify-between">
-          <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${isBreached ? 'from-red-500 to-pink-500' : 'from-emerald-500 to-green-400'}`} />
-          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Attendance Rate</span>
-          <p className={`text-3xl font-bold mt-3 tracking-tight ${isBreached ? 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>
-            {rate}%
-          </p>
+      <div className="stat-grid-3">
+        <div className="stat-card flex flex-col justify-between">
+          <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${isBreached ? 'from-red-500 to-pink-500' : 'from-emerald-500 to-green-400'}`} />
+          <span className="stat-card-label">Attendance Rate</span>
+          <p className={`stat-card-value ${isBreached ? 'text-red-600 dark:text-red-400' : ''}`}>{rate}%</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 relative overflow-hidden shadow-sm flex flex-col justify-between">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 to-cyan-400" />
-          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Days Present</span>
-          <p className="text-3xl font-bold mt-3 text-slate-900 dark:text-white tracking-tight">{present}</p>
+        <div className="stat-card flex flex-col justify-between">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 to-cyan-400" />
+          <span className="stat-card-label">Days Present</span>
+          <p className="stat-card-value">{present}</p>
         </div>
 
-        <div className="bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 relative overflow-hidden shadow-sm flex flex-col justify-between">
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-slate-400 to-slate-500" />
-          <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Total Recorded Sessions</span>
-          <p className="text-3xl font-bold mt-3 text-slate-900 dark:text-white tracking-tight">{total}</p>
+        <div className="stat-card flex flex-col justify-between col-span-2 sm:col-span-1">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-slate-400 to-slate-500" />
+          <span className="stat-card-label">Total Sessions</span>
+          <p className="stat-card-value">{total}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <Link
-          to="/dashboard/my-attendance"
-          className="group bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all flex items-center justify-between gap-4"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 p-3 rounded-xl transition-transform group-hover:scale-105">
-              <Calendar className="w-5 h-5" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <Link to="/dashboard/my-attendance" className="group action-card">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="action-card-icon bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400">
+              <Calendar className="w-4 h-4" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="font-semibold text-sm text-slate-900 dark:text-white">Attendance Logs</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Examine historic ledger details and sign-offs</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">View your attendance history</p>
             </div>
           </div>
-          <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+          <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
         </Link>
 
-        <Link
-          to="/dashboard/apply-leave"
-          className="group bg-white dark:bg-slate-950 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm transition-all flex items-center justify-between gap-4"
-        >
-          <div className="flex items-center gap-4">
-            <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 p-3 rounded-xl transition-transform group-hover:scale-105">
-              <FilePlus2 className="w-5 h-5" />
+        <Link to="/dashboard/apply-leave" className="group action-card">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="action-card-icon bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400">
+              <FilePlus2 className="w-4 h-4" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="font-semibold text-sm text-slate-900 dark:text-white">Leave Requests</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">File standard exemption justifications and track pipelines</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Apply for leave and track status</p>
             </div>
           </div>
-          <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 transition-transform group-hover:translate-x-0.5" />
+          <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
 
       {isBreached && total > 0 && (
-        <div className="mt-6 flex items-start gap-3 p-4 bg-red-50/50 border border-red-100 rounded-xl dark:bg-red-950/10 dark:border-red-900/30">
-          <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+        <div className="mt-4 flex items-start gap-3 p-3 md:p-4 bg-red-50/50 border border-red-100 rounded-lg dark:bg-red-950/10 dark:border-red-900/30">
+          <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-red-800 dark:text-red-400">Compliance Limit Notice</p>
+            <p className="text-sm font-bold text-red-800 dark:text-red-400">Compliance Notice</p>
             <p className="text-xs text-red-700/80 dark:text-red-400/70 mt-1 leading-relaxed">
-              Your overall metric is currently calculated below the required 75% limit. Ensure upcoming intervals are cleared or process structural leaves to balance the {absent} undocumented absence points.
+              Your attendance is below the required 75% limit. You have {absent} absent day(s) recorded.
             </p>
           </div>
         </div>

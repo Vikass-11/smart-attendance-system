@@ -16,79 +16,95 @@ const Sidebar = () => {
   const { appUser } = useAuth();
 
   const studentLinks = [
-    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar },
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, shortLabel: 'Home' },
+    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar, shortLabel: 'Time' },
   ];
 
   const facultyLinks = [
-    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { to: '/dashboard/attendance', label: 'Mark Attendance', icon: CalendarCheck },
-    { to: '/dashboard/leave', label: 'Leave Requests', icon: ClipboardList },
-    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar },
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, shortLabel: 'Home' },
+    { to: '/dashboard/attendance', label: 'Mark Attendance', icon: CalendarCheck, shortLabel: 'Mark' },
+    { to: '/dashboard/leave', label: 'Leave Requests', icon: ClipboardList, shortLabel: 'Leave' },
+    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar, shortLabel: 'Time' },
   ];
 
   const adminLinks = [
-    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { to: '/dashboard/departments', label: 'Departments', icon: Building2 },
-    { to: '/dashboard/users', label: 'Users', icon: Users },
-    { to: '/dashboard/reports', label: 'Reports', icon: FileText },
-    { to: '/dashboard/courses', label: 'Courses', icon: BookOpen },
-    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar },
+    { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, shortLabel: 'Home' },
+    { to: '/dashboard/departments', label: 'Departments', icon: Building2, shortLabel: 'Depts' },
+    { to: '/dashboard/users', label: 'Users', icon: Users, shortLabel: 'Users' },
+    { to: '/dashboard/reports', label: 'Reports', icon: FileText, shortLabel: 'Reports' },
+    { to: '/dashboard/courses', label: 'Courses', icon: BookOpen, shortLabel: 'Courses' },
+    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar, shortLabel: 'Time' },
   ];
 
   const links =
     appUser?.role === 'admin' ? adminLinks : appUser?.role === 'faculty' ? facultyLinks : studentLinks;
 
   return (
-    <aside
-      className="
-        /* Mobile Viewport: Persistent Bottom Flex Dock */
-        fixed bottom-0 left-0 right-0 z-40 flex flex-row items-center justify-around h-16 border-t border-slate-200/80 bg-white/95 backdrop-blur-md px-2 py-1 shadow-lg dark:border-slate-800/80 dark:bg-slate-950/95
-        /* Desktop Viewport: Standard Pinned Left Column */
-        md:sticky md:top-0 md:bottom-auto md:left-auto md:right-auto md:z-auto md:flex md:w-64 md:h-screen md:flex-col md:justify-start md:border-r md:border-t-0 md:bg-slate-50/60 md:p-4 md:shadow-none dark:md:bg-slate-950 transition-colors duration-200
-      "
-    >
-      {/* BRAND IDENTITY: Displayed on Desktop, Collapsed on Mobile */}
-      <div className="hidden md:flex items-center gap-3 px-3 py-4 mb-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white">
-          <GraduationCap className="h-4 w-4" />
+    <>
+      <aside className="hidden md:flex md:sticky md:top-0 md:h-screen md:w-52 md:shrink-0 md:flex-col md:border-r md:border-slate-200/80 md:bg-slate-50/80 md:p-3 dark:md:border-slate-800/80 dark:md:bg-slate-950 transition-colors duration-200">
+        <div className="flex items-center gap-2.5 px-2 py-3 mb-2">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
+            <GraduationCap className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-xs font-bold tracking-tight text-slate-800 dark:text-slate-200 leading-tight">
+            Smart Attendance
+          </span>
         </div>
-        <span className="text-sm font-bold tracking-tight text-slate-800 dark:text-slate-200 leading-tight">
-          Smart Attendance<br />System
-        </span>
-      </div>
 
-      {/* NAVIGATION LINKS: Flex Row on Mobile, Flex Column on Desktop */}
-      <nav className="flex flex-row w-full justify-between items-center gap-1 md:flex-col md:flex-1 md:justify-start md:items-stretch md:space-y-1">
-        {links.map((link, i) => {
-          const Icon = link.icon;
-          return (
-            <NavLink
-              key={i}
-              to={link.to}
-              end={link.to === '/dashboard'} // Preserved fix context
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-0.5 rounded-xl text-center flex-1 py-1 px-1.5 transition-all duration-150
-                md:flex-row md:justify-start md:gap-3 md:px-3 md:py-2 md:w-full md:text-left
-                ${
-                  isActive
-                    ? 'bg-slate-200/70 text-slate-900 font-semibold dark:bg-slate-800 dark:text-white'
-                    : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200'
-                }`
-              }
-            >
-              <Icon className="h-4 w-4 md:h-[18px] md:w-[18px] shrink-0" />
-              <span className="text-[10px] md:text-sm font-medium tracking-tight md:tracking-normal">{link.label}</span>
-            </NavLink>
-          );
-        })}
+        <nav className="flex flex-col flex-1 space-y-0.5 overflow-y-auto">
+          {links.map((link, i) => {
+            const Icon = link.icon;
+            return (
+              <NavLink
+                key={i}
+                to={link.to}
+                end={link.to === '/dashboard'}
+                className={({ isActive }) =>
+                  `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-all duration-150 ${
+                    isActive
+                      ? 'bg-slate-200/70 text-slate-900 font-semibold dark:bg-slate-800 dark:text-white'
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200'
+                  }`
+                }
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="truncate text-[13px] font-medium">{link.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        <div className="mt-auto pt-3 border-t border-slate-200/60 text-[10px] text-slate-400 dark:border-slate-800 px-2">
+          Logged in as{' '}
+          <span className="font-semibold text-slate-600 dark:text-slate-300 capitalize">{appUser?.role}</span>
+        </div>
+      </aside>
+
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/95 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/95 shadow-[0_-4px_20px_rgba(15,23,42,0.08)]">
+        <div className="flex items-stretch overflow-x-auto scrollbar-none px-1 py-1.5 gap-0.5">
+          {links.map((link, i) => {
+            const Icon = link.icon;
+            return (
+              <NavLink
+                key={i}
+                to={link.to}
+                end={link.to === '/dashboard'}
+                className={({ isActive }) =>
+                  `flex min-w-[4.25rem] shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1.5 transition-all duration-150 ${
+                    isActive
+                      ? 'bg-slate-200/70 text-slate-900 font-semibold dark:bg-slate-800 dark:text-white'
+                      : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900'
+                  }`
+                }
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="text-[9px] font-medium leading-tight text-center">{link.shortLabel}</span>
+              </NavLink>
+            );
+          })}
+        </div>
       </nav>
-
-      {/* METADATA FOOTER: Displayed on Desktop, Collapsed on Mobile */}
-      <div className="hidden md:block pt-4 border-t border-slate-200/60 text-[11px] text-slate-400 dark:border-slate-800">
-        Logged in as <span className="font-semibold text-slate-600 dark:text-slate-300 capitalize">{appUser?.role}</span>
-      </div>
-    </aside>
+    </>
   );
 };
 
