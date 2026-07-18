@@ -74,19 +74,19 @@ const StudentOverview = () => {
 
       <div className="stat-grid-3">
         <div className="stat-card flex flex-col justify-between">
-          <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${isBreached ? 'from-red-500 to-pink-500' : 'from-emerald-500 to-green-400'}`} />
+
           <span className="stat-card-label">Attendance Rate</span>
           <p className={`stat-card-value ${isBreached ? 'text-red-600 dark:text-red-400' : ''}`}>{rate}%</p>
         </div>
 
         <div className="stat-card flex flex-col justify-between">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 to-cyan-400" />
+
           <span className="stat-card-label">Days Present</span>
           <p className="stat-card-value">{present}</p>
         </div>
 
         <div className="stat-card flex flex-col justify-between col-span-2 sm:col-span-1">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-slate-400 to-slate-500" />
+
           <span className="stat-card-label">Total Sessions</span>
           <p className="stat-card-value">{total}</p>
         </div>

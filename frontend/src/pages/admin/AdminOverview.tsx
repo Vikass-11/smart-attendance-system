@@ -65,7 +65,7 @@ const AdminOverview = () => {
           { label: 'Absent (Month)', value: summary?.total_absent ?? 0, line: 'from-red-500 to-pink-400' },
         ].map((card, i) => (
           <div key={i} className="stat-card flex flex-col justify-between">
-            <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${card.line}`} />
+
             <span className="stat-card-label">{card.label}</span>
             <p className="stat-card-value">{card.value}</p>
           </div>
