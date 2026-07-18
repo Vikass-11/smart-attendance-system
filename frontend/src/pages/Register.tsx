@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Mail, Lock, User, Users, Info } from 'lucide-react';
+import { GraduationCap, Mail, Lock, User, Users, Info, Building } from 'lucide-react';
 import type { AxiosError } from 'axios';
 import apiClient from '../api/axiosClient';
 import { registerSchema } from '../schemas/authSchemas';
@@ -33,11 +33,15 @@ const Register = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: { role: 'student' },
   });
+
+  // Watch the role field to conditionally display the department field
+  const currentRole = watch('role', 'student');
 
   const onSubmit = async (data: RegisterFormData) => {
     setApiError('');
@@ -136,6 +140,31 @@ const Register = () => {
                 </select>
               </div>
               {errors.role && <p className="text-red-300 text-xs mt-1">{errors.role.message}</p>}
+            </div>
+          )}
+
+          {/* Conditional Department Selector Node */}
+          {currentRole !== 'admin' && (
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Department</label>
+              <div className="relative">
+                <Building className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+                <select
+                  {...register('department' as any, { required: 'Department assignment is required' })}
+                  defaultValue=""
+                  className="w-full bg-white/5 border border-white/15 text-white rounded-lg pl-10 pr-3 py-2.5 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                >
+                  <option value="" disabled className="bg-slate-800 text-slate-400">Select your department</option>
+                  <option value="Computer Science" className="bg-slate-800">Computer Science</option>
+                  <option value="Information Technology" className="bg-slate-800">Information Technology</option>
+                  <option value="Electrical Engineering" className="bg-slate-800">Electrical Engineering</option>
+                  <option value="Mechanical Engineering" className="bg-slate-800">Mechanical Engineering</option>
+                  <option value="Civil Engineering" className="bg-slate-800">Civil Engineering</option>
+                </select>
+              </div>
+              {(errors as any).department && (
+                <p className="text-red-300 text-xs mt-1">{(errors as any).department.message}</p>
+              )}
             </div>
           )}
 
