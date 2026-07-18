@@ -11,31 +11,33 @@ interface DepartmentRecord {
 const Register = () => {
   const navigate = useNavigate();
   
-  // Form States
+  // Form Inputs
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('student');
-  const [department, setDepartment] = useState('');
+  const [departmentId, setDepartmentId] = useState(''); // Tracks the numeric ID string
 
-  // UI Flow States
+  // UI Dataset States
   const [departments, setDepartments] = useState<DepartmentRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch true live database departments upon page mount
+  // Dynamically pull latest database departments created by Admin
   useEffect(() => {
     const fetchLiveDepartments = async () => {
       try {
-        // Hits your public department list endpoint
-        const response = await apiClient.get('/departments').catch(() => 
-          // Fallback in case your route is structured under auth sub-paths
-          apiClient.get('/auth/departments')
-        );
+        const response = await apiClient.get('/departments');
         const data = response.data?.data ?? response.data ?? [];
-        setDepartments(data);
+        setDepartments(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error('Failed to load live structural units:', err);
+        try {
+          // Fallback route context check
+          const fallbackRes = await apiClient.get('/auth/departments');
+          const data = fallbackRes.data?.data ?? fallbackRes.data ?? [];
+          setDepartments(Array.isArray(data) ? data : []);
+        } catch (fallbackErr) {
+          console.error('Could not load institutional departments:', fallbackErr);
+        }
       }
     };
     void fetchLiveDepartments();
@@ -46,25 +48,25 @@ const Register = () => {
     setError(null);
     setLoading(true);
 
-    if (!department) {
+    if (!departmentId) {
       setError('Please select your institutional department.');
       setLoading(false);
       return;
     }
 
     try {
-      // Dispatches full structural parameters to your registration database controller
+      // 🎯 Fixed: Sends 'departmentId' as an integer and forces 'role' to 'student'
       await apiClient.post('/auth/register', {
         name,
         email,
         password,
-        role,
-        department // Sends the clean dynamic name string selected from the database list
+        role: 'student', 
+        departmentId: Number(departmentId) 
       });
 
       navigate('/login');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed. Please check your credentials.');
+      setError(err.response?.data?.error || 'Registration failed. Please check your entries.');
     } finally {
       setLoading(false);
     }
@@ -74,7 +76,7 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
       <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
         
-        {/* App Branding Head */}
+        {/* Branding Title */}
         <div className="flex items-center justify-center gap-2 mb-6">
           <GraduationCap className="w-8 h-8 text-indigo-400" />
           <span className="text-xl font-bold text-white tracking-wide">Smart Attendance System</span>
@@ -91,10 +93,10 @@ const Register = () => {
           </div>
         )}
 
-        {/* 🛠️ FIXED: Added random name values to completely block browser autofill heuristics */}
-        <form onSubmit={handleRegisterSubmit} autoComplete="new-password" name="security-signup-form" className="space-y-4">
+        {/* Security configuration prevents basic browser cache injection fields */}
+        <form onSubmit={handleRegisterSubmit} autoComplete="new-password" name="signup-secure-matrix" className="space-y-4">
           
-          {/* Full Name Input Slot */}
+          {/* Full Name Input */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Full Name</label>
             <div className="relative">
@@ -104,14 +106,14 @@ const Register = () => {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Vikas Kumar"
+                placeholder="Ayrton Senna"
                 autoComplete="off"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950/40 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
 
-          {/* Email Address Input Slot */}
+          {/* Email Address Input */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Email Address</label>
             <div className="relative">
@@ -121,14 +123,14 @@ const Register = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
+                placeholder="ayrton.s@gmail.com"
                 autoComplete="off"
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950/40 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
 
-          {/* Password Input Slot */}
+          {/* Password Input */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Password</label>
             <div className="relative">
@@ -145,36 +147,20 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Institutional Access Role Selection Dropdown */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Role</label>
-            <div className="relative">
-              <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/40 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-indigo-500 transition-colors appearance-none"
-              >
-                <option value="student" className="bg-slate-900 text-white">Student</option>
-                <option value="faculty" className="bg-slate-900 text-white">Faculty</option>
-              </select>
-            </div>
-          </div>
-
-          {/* 🌟 FIXED: Dynamic Department Field (Loads directly from database records) */}
+          {/* Dynamic Database Dropdown Menu */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Department</label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <select
                 required
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
+                value={departmentId}
+                onChange={(e) => setDepartmentId(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-950/40 border border-white/10 rounded-lg text-sm text-slate-300 focus:outline-none focus:border-indigo-500 transition-colors"
               >
                 <option value="" disabled className="bg-slate-900 text-slate-500">Select your department</option>
                 {departments.map((dept) => (
-                  <option key={dept.id} value={dept.name} className="bg-slate-900 text-white">
+                  <option key={dept.id} value={dept.id} className="bg-slate-900 text-white">
                     {dept.name}
                   </option>
                 ))}
@@ -182,11 +168,11 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Submit Action Button */}
+          {/* Submission Trigger */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/20 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full mt-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/20 active:scale-[0.99] disabled:opacity-50"
           >
             {loading ? 'Registering Account...' : 'Register'}
           </button>
