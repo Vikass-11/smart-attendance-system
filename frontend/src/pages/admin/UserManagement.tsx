@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-// 🌟 FIXED: Removed 'Users' from the import line below to prevent the TS6133 build error
 import { Trash2, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
@@ -10,7 +9,8 @@ interface UserRecord {
   name: string;
   email: string;
   role: 'admin' | 'faculty' | 'student';
-  department?: string | { name: string };
+  department?: string | null;
+  departmentId?: number | null;
 }
 
 interface DepartmentRecord {
@@ -18,12 +18,18 @@ interface DepartmentRecord {
   name: string;
 }
 
+const ROLE_STYLES: Record<UserRecord['role'], string> = {
+  admin: 'bg-slate-600 text-white',
+  faculty: 'bg-emerald-600 text-white',
+  student: 'bg-blue-600 text-white',
+};
+
 const UserManagement = () => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [departments, setDepartments] = useState<DepartmentRecord[]>([]);
   const [selectedRoleFilter, setSelectedRoleFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -32,10 +38,10 @@ const UserManagement = () => {
     try {
       setError(null);
       const [usersResponse, deptsResponse] = await Promise.all([
-        apiClient.get('/admin/users'),
-        apiClient.get('/admin/departments')
+        apiClient.get('/admin/users', { params: { limit: 100 } }),
+        apiClient.get('/admin/departments', { params: { limit: 100 } }),
       ]);
-      
+
       setUsers(usersResponse.data?.data ?? usersResponse.data ?? []);
       setDepartments(deptsResponse.data?.data ?? deptsResponse.data ?? []);
     } catch (err) {
@@ -50,21 +56,42 @@ const UserManagement = () => {
     void fetchDataDirectives();
   }, []);
 
-  const handleUpdateUserProperties = async (userId: string | number, parameters: { role?: string; department?: string }) => {
+  const resolveDepartmentName = (departmentId: number | null | undefined): string => {
+    if (departmentId == null) return '';
+    return departments.find((dept) => dept.id === departmentId)?.name ?? '';
+  };
+
+  const handleUpdateUserProperties = async (
+    userId: string | number,
+    parameters: { role?: string; departmentId?: number | null }
+  ) => {
     setError(null);
     setSuccess(null);
     try {
-      await apiClient.patch(`/admin/users/${userId}`, parameters);
-      setSuccess('User security configuration updated successfully.');
-      
+      const response = await apiClient.patch(`/admin/users/${userId}`, parameters);
+      const updated = response.data?.data;
+
+      setSuccess('User updated successfully.');
+
       setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? ({ ...user, ...parameters } as UserRecord) : user
-        )
+        prevUsers.map((user) => {
+          if (user.id !== userId) return user;
+
+          const nextDepartmentId =
+            updated?.departmentId !== undefined ? updated.departmentId : user.departmentId ?? null;
+
+          return {
+            ...user,
+            role: (updated?.role ?? parameters.role ?? user.role) as UserRecord['role'],
+            departmentId: nextDepartmentId,
+            department: resolveDepartmentName(nextDepartmentId) || null,
+          };
+        })
       );
     } catch (err) {
       const errorPayload = err as AxiosError<{ error?: string }>;
-      setError(errorPayload.response?.data?.error || 'Failed to update target account properties.');
+      setError(errorPayload.response?.data?.error || 'Failed to update user.');
+      void fetchDataDirectives();
     }
   };
 
@@ -82,15 +109,9 @@ const UserManagement = () => {
     }
   };
 
-  const resolveUserDepartmentValue = (user: UserRecord): string => {
-    if (!user.department) return '';
-    if (typeof user.department === 'object') return user.department.name || '';
-    return user.department;
-  };
-
   const filteredUsers = users.filter((user) => {
     const matchesRole = selectedRoleFilter === 'all' || user.role === selectedRoleFilter;
-    const matchesSearch = 
+    const matchesSearch =
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesSearch;
@@ -100,8 +121,8 @@ const UserManagement = () => {
     <Layout>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">User Management</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage roles and access permissions across the institution.</p>
+          <h1 className="page-title">User Management</h1>
+          <p className="page-subtitle">Manage roles and access permissions across the institution.</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -146,65 +167,63 @@ const UserManagement = () => {
           <span className="text-xs text-slate-400 mt-3 font-medium tracking-wide">Assembling user profiles...</span>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="bg-white dark:bg-slate-950 border border-slate-200 rounded-xl p-8 text-center text-slate-400 italic text-sm shadow-sm">
+        <div className="panel-card text-center text-slate-400 italic text-sm">
           No registered records match your lookup parameters.
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-x-auto text-sm">
+        <div className="panel-card overflow-x-auto text-sm p-0">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/20 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                <th className="px-6 py-3.5">User</th>
-                <th className="px-4 py-3.5">Current Role</th>
-                <th className="px-4 py-3.5">Department</th>
-                <th className="px-4 py-3.5">Change Role</th>
-                <th className="px-6 py-3.5 text-center">Actions</th>
+                <th className="px-4 py-3">User</th>
+                <th className="px-3 py-3">Current Role</th>
+                <th className="px-3 py-3">Department</th>
+                <th className="px-3 py-3">Change Role</th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
               {filteredUsers.map((user) => {
-                const currentDepartment = resolveUserDepartmentValue(user);
+                const departmentValue =
+                  user.departmentId != null ? String(user.departmentId) : '';
 
                 return (
                   <tr key={user.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-900/10 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 shrink-0 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold text-xs uppercase">
+                        <div className="h-8 w-8 shrink-0 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-600 dark:text-slate-400 font-bold text-xs uppercase">
                           {user.name.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                            {user.name}
-                          </div>
+                          <div className="font-semibold text-slate-900 dark:text-white">{user.name}</div>
                           <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{user.email}</div>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wide ${
-                        user.role === 'admin' 
-                          ? 'bg-slate-900 text-slate-100 dark:bg-white dark:text-slate-900' 
-                          : user.role === 'faculty'
-                          ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400'
-                          : 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400'
-                      }`}>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold uppercase tracking-wide ${ROLE_STYLES[user.role]}`}
+                      >
                         {user.role}
                       </span>
                     </td>
 
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       {user.role === 'admin' ? (
                         <span className="text-xs text-slate-400 italic">Global System Scope</span>
                       ) : (
                         <select
-                          value={currentDepartment}
-                          onChange={(e) => void handleUpdateUserProperties(user.id, { department: e.target.value })}
-                          className="px-2 py-1 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                          value={departmentValue}
+                          onChange={(e) => {
+                            const nextDepartmentId = e.target.value ? Number(e.target.value) : null;
+                            void handleUpdateUserProperties(user.id, { departmentId: nextDepartmentId });
+                          }}
+                          className="px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400 min-w-[140px]"
                         >
                           <option value="">Unassigned (None)</option>
                           {departments.map((dept) => (
-                            <option key={dept.id} value={dept.name}>
+                            <option key={dept.id} value={dept.id}>
                               {dept.name}
                             </option>
                           ))}
@@ -212,11 +231,13 @@ const UserManagement = () => {
                       )}
                     </td>
 
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-3 py-3 whitespace-nowrap">
                       <select
                         value={user.role}
-                        onChange={(e) => void handleUpdateUserProperties(user.id, { role: e.target.value })}
-                        className="px-2 py-1 bg-transparent border border-slate-200 dark:border-slate-800 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                        onChange={(e) =>
+                          void handleUpdateUserProperties(user.id, { role: e.target.value })
+                        }
+                        className="px-2 py-1 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-md text-xs font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-400"
                       >
                         <option value="student">Student</option>
                         <option value="faculty">Faculty</option>
@@ -224,9 +245,9 @@ const UserManagement = () => {
                       </select>
                     </td>
 
-                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                    <td className="px-4 py-3 text-center whitespace-nowrap">
                       <button
-                        onClick={() => handleDeleteUser(user.id, user.name)}
+                        onClick={() => void handleDeleteUser(user.id, user.name)}
                         className="p-1 rounded-lg text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors outline-none"
                         title={`Delete account entry for ${user.name}`}
                       >

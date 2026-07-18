@@ -82,23 +82,27 @@ export const listUsers = async (req: AuthenticatedRequest, res: Response, next: 
 
 export const updateUser = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   const { id } = req.params;
-  const { role, departmentId } = req.body;
+  const { role, departmentId } = req.body as { role?: string; departmentId?: number | null };
   const actingUser = req.user!;
   const targetId = Number(id);
 
-  if (!adminService.isValidRole(role)) {
+  if (role !== undefined && !adminService.isValidRole(role)) {
     next(new AppError('Invalid role. Must be one of: student, faculty, admin', 400, 'VALIDATION_ERROR'));
     return;
   }
 
-  // Prevent admin from changing their own role
-  if (actingUser.id === targetId) {
+  if (departmentId !== undefined && departmentId !== null && Number.isNaN(Number(departmentId))) {
+    next(new AppError('departmentId must be a number or null', 400, 'VALIDATION_ERROR'));
+    return;
+  }
+
+  // Prevent admin from changing their own role unless role unchanged
+  if (actingUser.id === targetId && role !== undefined && role !== actingUser.role) {
     next(new AppError('You cannot change your own role', 403, 'SELF_ROLE_CHANGE'));
     return;
   }
 
   try {
-    // Fetch target user to check system-admin flag
     const targetUser = await adminService.getUserById(targetId);
 
     if (!targetUser) {
@@ -106,8 +110,11 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response, next:
       return;
     }
 
-    // The first registered system admin cannot be demoted by anyone
-    if (targetUser.is_system_admin && role !== 'admin') {
+    const nextRole = role ?? targetUser.role;
+    const nextDepartmentId =
+      departmentId !== undefined ? (departmentId === null ? null : Number(departmentId)) : targetUser.department_id;
+
+    if (targetUser.is_system_admin && nextRole !== 'admin') {
       next(new AppError(
         'The system admin (first registered admin) cannot be demoted. This is a protected account.',
         403,
@@ -116,11 +123,20 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response, next:
       return;
     }
 
-    await adminService.changeUserRole(targetId, role, departmentId || null);
+    if (role !== undefined && departmentId !== undefined) {
+      await adminService.changeUserRole(targetId, nextRole, nextDepartmentId);
+    } else if (role !== undefined) {
+      await adminService.changeUserRole(targetId, nextRole, targetUser.department_id ?? null);
+    } else if (departmentId !== undefined) {
+      await adminService.changeUserDepartment(targetId, nextDepartmentId);
+    } else {
+      next(new AppError('No updatable fields provided', 400, 'VALIDATION_ERROR'));
+      return;
+    }
 
     sendSuccess(res, {
-      message: 'User role updated successfully',
-      data: { id: targetId, role, departmentId: departmentId || null },
+      message: 'User updated successfully',
+      data: { id: targetId, role: nextRole, departmentId: nextDepartmentId },
     });
   } catch (error) {
     if (error instanceof AppError) {

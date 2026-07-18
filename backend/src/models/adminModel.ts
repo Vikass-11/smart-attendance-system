@@ -61,7 +61,7 @@ export const getAllDepartments = async (filters: DepartmentFilters): Promise<{ r
 
 export const getUsers = async (filters: UserFilters): Promise<{ rows: UserModelRow[]; total: number }> => {
   let query = `
-    SELECT u.id, u.name, u.email, u.role, u.is_system_admin, u.is_active, d.name as department, u.created_at as createdAt 
+    SELECT u.id, u.name, u.email, u.role, u.is_system_admin, u.is_active, u.department_id as departmentId, d.name as department, u.created_at as createdAt 
     FROM users u
     LEFT JOIN departments d ON u.department_id = d.id
     WHERE u.is_active = 1
@@ -102,8 +102,16 @@ export const getUserById = async (id: number): Promise<any | null> => {
   return rows[0] || null;
 };
 
-export const updateUserRoleAndDept = async (id: number, role: string, departmentId: number | null): Promise<void> => {
+export const updateUserRoleAndDept = async (
+  id: number,
+  role: string,
+  departmentId: number | null
+): Promise<void> => {
   await db.query('UPDATE users SET role = ?, department_id = ? WHERE id = ?', [role, departmentId, id]);
+};
+
+export const updateUserDepartment = async (id: number, departmentId: number | null): Promise<void> => {
+  await db.query('UPDATE users SET department_id = ? WHERE id = ?', [departmentId, id]);
 };
 
 export const deleteUserSoft = async (id: number): Promise<void> => {
