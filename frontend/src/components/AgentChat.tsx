@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Check, XCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import apiClient from '../api/axiosClient';
 import { useAuth } from '../hooks/useAuth';
 
@@ -152,7 +153,7 @@ const AgentChat = () => {
                   }`}
                 >
                   <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                   </div>
                   {msg.pendingConfirmation && (
                     <div className="mt-3 flex flex-wrap gap-2">
