@@ -59,72 +59,72 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-mesh flex items-center justify-center p-6">
-      <div className="glass rounded-2xl shadow-2xl w-full max-w-md p-8 relative z-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6">
+      <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 w-full max-w-md p-8 relative z-10">
         <div className="flex items-center gap-2 mb-8 justify-center">
-          <div className="bg-indigo-500/20 p-2 rounded-xl">
-            <GraduationCap className="w-6 h-6 text-indigo-300" />
+          <div className="bg-indigo-100 dark:bg-indigo-500/20 p-2 rounded-xl">
+            <GraduationCap className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
           </div>
-          <span className="font-semibold text-lg text-white">Smart Attendance System</span>
+          <span className="font-semibold text-lg text-slate-900 dark:text-white">Smart Attendance System</span>
         </div>
 
-        <h2 className="text-2xl font-bold text-white mb-1 text-center">Welcome back</h2>
-        <p className="text-slate-400 text-sm mb-6 text-center">Sign in to continue to your dashboard</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1 text-center">Welcome back</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 text-center">Sign in to continue to your dashboard</p>
 
         {justRegistered && (
-          <div className="flex items-center gap-2 text-emerald-300 text-sm mb-4 bg-emerald-500/10 border border-emerald-400/20 rounded-lg p-3">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-sm mb-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-400/20 rounded-lg p-3">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             Account created successfully. Please log in.
           </div>
         )}
 
         {apiError && (
-          <div className="text-red-300 text-sm mb-4 bg-red-500/10 border border-red-400/20 rounded-lg p-3">
+          <div className="text-red-700 dark:text-red-300 text-sm mb-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20 rounded-lg p-3">
             {apiError}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="email"
                 {...register('email')}
-                className="w-full bg-white/5 border border-white/15 text-white placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                 placeholder="you@institution.edu"
               />
             </div>
-            {errors.email && <p className="text-red-300 text-xs mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-red-600 dark:text-red-300 text-xs mt-1">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="password"
                 {...register('password')}
-                className="w-full bg-white/5 border border-white/15 text-white placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                 placeholder="••••••••"
               />
             </div>
-            {errors.password && <p className="text-red-300 text-xs mt-1">{errors.password.message}</p>}
+            {errors.password && <p className="text-red-600 dark:text-red-300 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-400 transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/30"
+            className="w-full bg-indigo-600 dark:bg-indigo-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 dark:hover:bg-indigo-400 transition-colors disabled:opacity-50 shadow-md shadow-indigo-500/20 dark:shadow-indigo-500/30"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        <p className="text-sm text-center mt-6 text-slate-400">
+        <p className="text-sm text-center mt-6 text-slate-500 dark:text-slate-400">
           Don't have an account?{' '}
-          <a href="/register" className="text-indigo-300 font-medium hover:underline">
+          <a href="/register" className="text-indigo-600 dark:text-indigo-300 font-medium hover:underline">
             Register
           </a>
         </p>

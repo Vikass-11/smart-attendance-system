@@ -128,7 +128,7 @@ const CourseManagement = () => {
 
   const saveEditFaculty = async (courseId: number) => {
     try {
-      await apiClient.patch(`/courses/${courseId}`, {
+      await apiClient.put(`/courses/${courseId}`, {
         facultyId: editFacultyId ? Number(editFacultyId) : null,
       });
       setEditingCourseId(null);
@@ -162,10 +162,10 @@ const CourseManagement = () => {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Course Management</h1>
+      <h1 className="page-title mb-6">Course Management</h1>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Add New Course</h2>
+      <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 mb-6">
+        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Add New Course</h2>
 
         {apiError && (
           <p className="text-red-600 text-sm mb-3 bg-red-50 border border-red-200 rounded-lg p-3">{apiError}</p>
@@ -177,7 +177,7 @@ const CourseManagement = () => {
               type="text"
               {...register('name')}
               placeholder="Course name"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white"
             />
             {errors.name && <p className="text-red-600 text-xs mt-1">{errors.name.message}</p>}
           </div>
@@ -187,26 +187,26 @@ const CourseManagement = () => {
               type="text"
               {...register('code')}
               placeholder="Course code"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white"
             />
             {errors.code && <p className="text-red-600 text-xs mt-1">{errors.code.message}</p>}
           </div>
 
           <div>
-            <select {...register('departmentId')} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-              <option value="">Select department</option>
+            <select {...register('departmentId')} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white">
+              <option value="" className="dark:bg-slate-900">Select department</option>
               {departments.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
+                <option key={d.id} value={d.id} className="dark:bg-slate-900">{d.name}</option>
               ))}
             </select>
             {errors.departmentId && <p className="text-red-600 text-xs mt-1">{errors.departmentId.message}</p>}
           </div>
 
           <div>
-            <select {...register('facultyId')} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-              <option value="">Assign faculty (optional)</option>
+            <select {...register('facultyId')} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white">
+              <option value="" className="dark:bg-slate-900">Assign faculty (optional)</option>
               {facultyList.map((f) => (
-                <option key={f.id} value={String(f.id)}>{f.name}</option>
+                <option key={f.id} value={String(f.id)} className="dark:bg-slate-900">{f.name}</option>
               ))}
             </select>
           </div>
@@ -216,7 +216,7 @@ const CourseManagement = () => {
               type="number"
               {...register('credits')}
               placeholder="Credits"
-              className="w-20 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              className="w-20 border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white"
             />
             <button
               type="submit"
@@ -229,15 +229,15 @@ const CourseManagement = () => {
         </form>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">All Courses</h2>
+      <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">All Courses</h2>
         <div className="space-y-2">
           {courses.length === 0 && <p className="text-sm text-slate-400">No courses yet.</p>}
           {courses.map((c) => (
-            <div key={c.id} className="border border-slate-100 rounded-lg">
+            <div key={c.id} className="border border-slate-100 dark:border-slate-800 rounded-lg">
               <div className="flex items-center justify-between p-3">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-800">{c.code} — {c.name}</p>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{c.code} — {c.name}</p>
                   <div className="text-xs text-slate-500 flex items-center gap-2">
                     <span>{getDeptName(c.departmentId)} • {c.credits} credits • Faculty:</span>
                     {editingCourseId === c.id ? (
@@ -245,7 +245,7 @@ const CourseManagement = () => {
                         <select
                           value={editFacultyId}
                           onChange={(e) => setEditFacultyId(e.target.value)}
-                          className="border border-slate-300 rounded px-1 py-0.5 text-xs"
+                          className="border border-slate-300 dark:border-slate-700 bg-transparent rounded px-1 py-0.5 text-xs text-slate-900 dark:text-white"
                         >
                           <option value="">Unassigned</option>
                           {facultyList.map((f) => (
@@ -277,15 +277,15 @@ const CourseManagement = () => {
               </div>
 
               {expandedCourseId === c.id && (
-                <div className="border-t border-slate-100 p-3 bg-slate-50">
-                  <p className="text-xs font-medium text-slate-600 mb-2">Enroll / Unenroll Students</p>
+                <div className="border-t border-slate-100 dark:border-slate-800 p-3 bg-slate-50 dark:bg-slate-900/50">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Enroll / Unenroll Students</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-48 overflow-y-auto">
                     {students.map((s) => {
                       const isEnrolled = (enrolledMap[c.id] || []).includes(s.id);
                       return (
                         <label
                           key={s.id}
-                          className="flex items-center gap-2 text-xs text-slate-700 bg-white rounded px-2 py-1.5 border border-slate-100 cursor-pointer"
+                          className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-950 rounded px-2 py-1.5 border border-slate-100 dark:border-slate-800 cursor-pointer"
                         >
                           <input
                             type="checkbox"

@@ -85,10 +85,10 @@ const TimetableManagement = () => {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Timetable Management</h1>
+      <h1 className="page-title mb-6">Timetable Management</h1>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Add Timetable Slot</h2>
+      <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 mb-6">
+        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Add Timetable Slot</h2>
 
         {apiError && (
           <p className="text-red-600 text-sm mb-3 bg-red-50 border border-red-200 rounded-lg p-3">{apiError}</p>
@@ -96,30 +96,30 @@ const TimetableManagement = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-5 gap-3" noValidate>
           <div>
-            <select {...register('courseId')} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
-              <option value="">Select course</option>
+            <select {...register('courseId')} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white">
+              <option value="" className="dark:bg-slate-900">Select course</option>
               {courses.map((c) => (
-                <option key={c.id} value={c.id}>{c.code} - {c.name}</option>
+                <option key={c.id} value={c.id} className="dark:bg-slate-900">{c.code} - {c.name}</option>
               ))}
             </select>
             {errors.courseId && <p className="text-red-600 text-xs mt-1">{errors.courseId.message}</p>}
           </div>
 
           <div>
-            <select {...register('dayOfWeek')} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm">
+            <select {...register('dayOfWeek')} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white">
               {DAYS.map((d) => (
-                <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                <option key={d} value={d} className="dark:bg-slate-900">{d.charAt(0).toUpperCase() + d.slice(1)}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <input type="time" {...register('startTime')} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+            <input type="time" {...register('startTime')} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white [color-scheme:light_dark]" />
             {errors.startTime && <p className="text-red-600 text-xs mt-1">{errors.startTime.message}</p>}
           </div>
 
           <div>
-            <input type="time" {...register('endTime')} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+            <input type="time" {...register('endTime')} className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white [color-scheme:light_dark]" />
             {errors.endTime && <p className="text-red-600 text-xs mt-1">{errors.endTime.message}</p>}
           </div>
 
@@ -128,7 +128,7 @@ const TimetableManagement = () => {
               type="text"
               {...register('room')}
               placeholder="Room"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-white"
             />
             <button
               type="submit"
@@ -141,18 +141,18 @@ const TimetableManagement = () => {
         </form>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-        <h2 className="font-semibold text-slate-900 mb-4">Current Schedule</h2>
+      <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
+        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">Current Schedule</h2>
         <div className="space-y-4">
           {courses.map((c) => (
             <div key={c.id}>
-              <p className="text-sm font-medium text-slate-800 mb-1">{c.code} - {c.name}</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">{c.code} - {c.name}</p>
               {(!slots[c.id] || slots[c.id].length === 0) ? (
                 <p className="text-xs text-slate-400 ml-2">No slots scheduled.</p>
               ) : (
                 <div className="space-y-1 ml-2">
                   {slots[c.id].map((s) => (
-                    <div key={s.id} className="flex justify-between items-center text-xs text-slate-600 border-b border-slate-50 pb-1">
+                    <div key={s.id} className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400 border-b border-slate-50 dark:border-slate-800/50 pb-1">
                       <span className="capitalize">
                         {s.dayOfWeek} • {s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)} {s.room && `• ${s.room}`}
                       </span>
