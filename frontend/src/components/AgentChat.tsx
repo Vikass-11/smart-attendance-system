@@ -152,7 +152,7 @@ const AgentChat = () => {
                       : 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100'
                   }`}
                 >
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                   </div>
                   {msg.pendingConfirmation && (
