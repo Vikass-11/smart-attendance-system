@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CalendarCheck, ClipboardList, AlertTriangle, ArrowRight } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { useAuth } from '../../hooks/useAuth';
 import { useDashboardStore } from '../../store/dashboardStore';
 
@@ -77,9 +78,7 @@ const FacultyOverview = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex h-[50vh] items-center justify-center">
-          <p className="text-sm font-medium text-slate-500 animate-pulse">Processing alert registers...</p>
-        </div>
+        <Spinner className="min-h-[50vh] w-full" label="Processing alert registers..." />
       </Layout>
     );
   }

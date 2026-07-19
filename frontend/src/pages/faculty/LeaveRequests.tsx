@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Clock } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 interface PendingLeave {
@@ -52,9 +53,7 @@ const LeaveRequests = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex h-[50vh] items-center justify-center">
-          <p className="text-sm font-medium text-slate-500 animate-pulse">Loading leave queue entries...</p>
-        </div>
+        <Spinner className="min-h-[50vh] w-full" label="Loading leave queue entries..." />
       </Layout>
     );
   }

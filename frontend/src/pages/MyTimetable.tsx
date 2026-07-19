@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../api/axiosClient';
 import Layout from '../components/Layout';
+import Spinner from '../components/Spinner';
 import type { StudentTimetableEntry } from '../types/course';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -26,7 +27,7 @@ const MyTimetable = () => {
   const entriesForDay = (day: string) =>
     entries.filter((e) => e.dayOfWeek === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
 
-  if (loading) return <Layout><p>Loading...</p></Layout>;
+  if (loading) return <Layout><Spinner className="min-h-[50vh] w-full" label="Loading timetable..." /></Layout>;
 
   return (
     <Layout>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Plus, Trash2, Building, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import type { AxiosError } from 'axios';
 
 interface DepartmentNode {
@@ -122,11 +123,7 @@ const Departments = () => {
 
       {/* Core Display State Resolver */}
       {loading ? (
-        /* Perfectly Centered Content Loading Spinner */
-        <div className="flex flex-col items-center justify-center min-h-[280px] w-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-slate-900 dark:border-slate-800 dark:border-t-white"></div>
-          <span className="text-xs text-slate-400 mt-3 font-medium tracking-wide">Syncing architecture...</span>
-        </div>
+        <Spinner className="min-h-[280px] w-full" label="Syncing architecture..." />
       ) : departments.length === 0 ? (
         <div className="bg-white dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800/60 rounded-xl p-8 text-center text-slate-400 italic text-sm shadow-sm">
           No institutional infrastructure logs mapped to node indexes.

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Calendar, FilePlus2, ArrowRight, XCircle } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 interface PercentageData {
@@ -52,9 +53,7 @@ const StudentOverview = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex h-[50vh] items-center justify-center">
-          <p className="text-sm font-medium text-slate-500 animate-pulse">Syncing systemic compliance metrics...</p>
-        </div>
+        <Spinner className="min-h-[50vh] w-full" label="Syncing systemic compliance metrics..." />
       </Layout>
     );
   }

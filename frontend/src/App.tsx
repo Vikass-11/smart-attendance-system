@@ -16,11 +16,12 @@ import ErrorBoundary from './components/ErrorBoundary';
 import CourseManagement from './pages/admin/CourseManagement';
 import TimetableManagement from './pages/admin/TimetableManagement';
 import MyTimetable from './pages/MyTimetable';
+import Loader from './components/Loader';
 
 function App() {
   const { appUser, loading } = useAuth();
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <Loader />;
 
   if (!appUser) {
     return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Calendar, CheckSquare } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 interface StudentUser {
@@ -68,9 +69,7 @@ const MarkAttendance = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex h-[50vh] items-center justify-center">
-          <p className="text-sm font-medium text-slate-500 animate-pulse">Syncing class list indices...</p>
-        </div>
+        <Spinner className="min-h-[50vh] w-full" label="Syncing class list indices..." />
       </Layout>
     );
   }

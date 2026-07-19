@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { GraduationCap, User, Mail, Lock, Building2 } from 'lucide-react';
 import apiClient from '../api/axiosClient';
 import type { AxiosError } from 'axios';
+import Spinner from '../components/Spinner';
 
 interface DepartmentRecord {
   id: number;
@@ -176,7 +177,11 @@ const Register = () => {
             disabled={loading}
             className="w-full mt-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/20 active:scale-[0.99] disabled:opacity-50"
           >
-            {loading ? 'Registering Account...' : 'Register'}
+            {loading ? (
+              <Spinner inline size="sm" variant="light" label="Registering Account..." />
+            ) : (
+              'Register'
+            )}
           </button>
         </form>
 

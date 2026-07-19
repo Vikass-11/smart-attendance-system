@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { FileText, Send, CalendarRange, ShieldAlert } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { useDashboardStore } from '../../store/dashboardStore';
 import { leaveSchema } from '../../schemas/leaveSchema';
 import type { LeaveFormData } from '../../schemas/leaveSchema';
@@ -168,7 +169,7 @@ const ApplyLeave = () => {
 
           <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
             {loadingHistory ? (
-              <p className="text-xs text-slate-400 py-6 text-center animate-pulse">Syncing pipeline registries...</p>
+              <Spinner className="py-6 w-full" label="Syncing pipeline registries..." />
             ) : leaveRequests.length === 0 ? (
               <p className="text-xs text-slate-400 py-8 text-center">No structural exemption records logged.</p>
             ) : (

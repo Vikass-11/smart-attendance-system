@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { courseSchema } from '../../schemas/courseSchema';
 import type { CourseFormInput, CourseFormData } from '../../schemas/courseSchema';
 import type { Course } from '../../types/course';
@@ -184,7 +185,7 @@ const CourseManagement = () => {
   const getDeptName = (id: number) => departments.find((d) => d.id === id)?.name || '-';
   const getFacultyName = (id: number | null) => facultyList.find((f) => f.id === id)?.name || 'Unassigned';
 
-  if (loading) return <Layout><p>Loading...</p></Layout>;
+  if (loading) return <Layout><Spinner className="min-h-[50vh] w-full" label="Loading courses..." /></Layout>;
 
   return (
     <Layout>

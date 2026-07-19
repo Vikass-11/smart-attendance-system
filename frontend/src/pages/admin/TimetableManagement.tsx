@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { timetableSlotSchema } from '../../schemas/courseSchema';
 import type { TimetableSlotFormInput, TimetableSlotFormData } from '../../schemas/courseSchema';
 import type { Course, TimetableSlot } from '../../types/course';
@@ -94,7 +95,7 @@ const TimetableManagement = () => {
     }
   };
 
-  if (loading) return <Layout><p>Loading...</p></Layout>;
+  if (loading) return <Layout><Spinner className="min-h-[50vh] w-full" label="Loading timetable..." /></Layout>;
 
   return (
     <Layout>

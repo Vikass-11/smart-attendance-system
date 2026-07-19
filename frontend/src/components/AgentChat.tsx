@@ -3,6 +3,7 @@ import { MessageSquare, X, Send, Check, XCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import apiClient from '../api/axiosClient';
+import Spinner from './Spinner';
 import { useAuth } from '../hooks/useAuth';
 
 interface PendingConfirmation {
@@ -176,7 +177,7 @@ const AgentChat = () => {
                 </div>
               </div>
             ))}
-            {loading && <p className="text-xs text-slate-400">Thinking...</p>}
+            {loading && <Spinner size="sm" label="Thinking..." />}
           </div>
 
           <div className="p-2.5 md:p-3 border-t border-slate-200 dark:border-slate-800 flex gap-2 shrink-0 bg-white dark:bg-slate-950">

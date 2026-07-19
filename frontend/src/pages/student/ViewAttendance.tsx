@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 interface AttendanceRecord {
@@ -60,9 +61,7 @@ const ViewAttendance = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="flex h-[50vh] items-center justify-center">
-          <p className="text-sm font-medium text-slate-500 animate-pulse">Syncing personal validation ledger...</p>
-        </div>
+        <Spinner className="min-h-[50vh] w-full" label="Syncing personal validation ledger..." />
       </Layout>
     );
   }

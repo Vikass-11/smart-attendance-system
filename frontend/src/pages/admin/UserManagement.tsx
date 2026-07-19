@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Trash2, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 import type { AxiosError } from 'axios';
 
 interface UserRecord {
@@ -163,10 +164,7 @@ const UserManagement = () => {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[320px] w-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 border-t-slate-900 dark:border-slate-800 dark:border-t-white"></div>
-          <span className="text-xs text-slate-400 mt-3 font-medium tracking-wide">Assembling user profiles...</span>
-        </div>
+        <Spinner className="min-h-[320px] w-full" label="Assembling user profiles..." />
       ) : filteredUsers.length === 0 ? (
         <div className="panel-card text-center text-slate-400 italic text-sm">
           No registered records match your lookup parameters.

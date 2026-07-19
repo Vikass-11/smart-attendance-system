@@ -6,6 +6,7 @@ import { GraduationCap, Mail, Lock, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../schemas/authSchemas';
 import type { LoginFormData } from '../schemas/authSchemas';
+import Spinner from '../components/Spinner';
 
 const Login = () => {
   const [apiError, setApiError] = useState('');
@@ -118,7 +119,11 @@ const Login = () => {
             disabled={loading}
             className="w-full bg-indigo-600 dark:bg-indigo-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 dark:hover:bg-indigo-400 transition-colors disabled:opacity-50 shadow-md shadow-indigo-500/20 dark:shadow-indigo-500/30"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (
+              <Spinner inline size="sm" variant="light" label="Signing in..." />
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import apiClient from '../../api/axiosClient';
 import Layout from '../../components/Layout';
+import Spinner from '../../components/Spinner';
 
 interface UserRow {
   id: number;
@@ -127,7 +128,7 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) return <Layout><p>Loading...</p></Layout>;
+  if (loading) return <Layout><Spinner className="min-h-[50vh] w-full" label="Loading dashboard..." /></Layout>;
 
   return (
     <Layout>
