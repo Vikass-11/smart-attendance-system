@@ -261,8 +261,8 @@ const CourseManagement = () => {
           {courses.length === 0 && <p className="text-sm text-slate-400">No courses yet.</p>}
           {courses.map((c) => (
             <div key={c.id} className="border border-slate-100 dark:border-slate-800 rounded-lg">
-              <div className="flex items-center justify-between p-3">
-                <div className="flex-1">
+              <div className="flex items-center justify-between p-3 min-w-0">
+                <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{c.code} — {c.name}</p>
                   <div className="text-xs text-slate-500 flex items-center gap-2">
                     <span>{getDeptName(c.departmentId)} • {c.credits} credits • Faculty:</span>

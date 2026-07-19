@@ -207,35 +207,37 @@ const AdminDashboard = () => {
           </form>
         </div>
 
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-gray-500 border-b">
-              <th className="pb-2">Name</th>
-              <th className="pb-2">Email</th>
-              <th className="pb-2">Role</th>
-              <th className="pb-2">Department</th>
-              <th className="pb-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b">
-                <td className="py-2">{u.name}</td>
-                <td className="py-2">{u.email}</td>
-                <td className="py-2 capitalize">{u.role}</td>
-                <td className="py-2">{u.department || '-'}</td>
-                <td className="py-2 text-right">
-                  <button
-                    onClick={() => handleDeleteUser(u.id)}
-                    className="text-red-600 text-xs hover:underline"
-                  >
-                    Delete
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
+            <thead>
+              <tr className="text-left text-gray-500 border-b">
+                <th className="pb-2">Name</th>
+                <th className="pb-2">Email</th>
+                <th className="pb-2">Role</th>
+                <th className="pb-2">Department</th>
+                <th className="pb-2"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} className="border-b">
+                  <td className="py-2">{u.name}</td>
+                  <td className="py-2">{u.email}</td>
+                  <td className="py-2 capitalize">{u.role}</td>
+                  <td className="py-2">{u.department || '-'}</td>
+                  <td className="py-2 text-right">
+                    <button
+                      onClick={() => handleDeleteUser(u.id)}
+                      className="text-red-600 text-xs hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </Layout>
   );

@@ -120,17 +120,17 @@ const UserManagement = () => {
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 min-w-0">
+        <div className="min-w-0">
           <h1 className="page-title">User Management</h1>
           <p className="page-subtitle">Manage roles and access permissions across the institution.</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto min-w-0">
           <select
             value={selectedRoleFilter}
             onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-700 dark:text-slate-300 focus:outline-none"
+            className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm text-slate-700 dark:text-slate-300 focus:outline-none w-full sm:w-auto"
           >
             <option value="all" className="dark:bg-slate-900">All Roles</option>
             <option value="admin" className="dark:bg-slate-900">Admins</option>
@@ -143,7 +143,7 @@ const UserManagement = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search users..."
-            className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm placeholder-slate-400 text-slate-900 dark:text-white focus:outline-none md:w-64"
+            className="px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-sm placeholder-slate-400 text-slate-900 dark:text-white focus:outline-none w-full md:w-64"
           />
         </div>
       </div>
@@ -172,8 +172,8 @@ const UserManagement = () => {
           No registered records match your lookup parameters.
         </div>
       ) : (
-        <div className="panel-card overflow-x-auto text-sm p-0">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+        <div className="panel-card overflow-x-auto text-sm p-0 min-w-0">
+          <table className="w-full text-left border-collapse min-w-[640px]">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/20 text-xs font-bold text-slate-400 uppercase tracking-wider">
                 <th className="px-4 py-3">User</th>

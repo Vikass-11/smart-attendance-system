@@ -8,7 +8,7 @@ const options: any = {
     info: {
       title: 'Smart Attendance API',
       version: '1.0.0',
-      description: 'API documentation for the EduFlow',
+      description: 'API documentation for the Smart Attendance System',
     },
     servers: [{ url: '/api', description: 'Local API' }],
   },

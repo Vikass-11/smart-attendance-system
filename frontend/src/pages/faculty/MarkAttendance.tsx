@@ -103,11 +103,11 @@ const MarkAttendance = () => {
         <div className="space-y-1 divide-y divide-slate-100 dark:divide-slate-800/60 max-h-96 overflow-y-auto pr-1 mb-6">
           {students.length === 0 && <p className="text-sm text-slate-400 py-4 text-center">No students registered.</p>}
           {students.map((student) => (
-            <div key={student.id} className="flex justify-between items-center py-3 first:pt-0 last:pb-0">
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <div key={student.id} className="flex flex-wrap justify-between items-center py-3 first:pt-0 last:pb-0 gap-2">
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300 min-w-0 truncate flex-1">
                 {student.name} <span className="text-slate-400 font-normal text-xs">({student.email})</span>
               </span>
-              <div className="flex gap-1">
+              <div className="flex gap-1 shrink-0">
                 {['present', 'absent', 'late'].map((status) => {
                   const active = attendanceMap[student.id] === status;
                   const theme = 

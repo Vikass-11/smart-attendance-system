@@ -157,7 +157,7 @@ const TimetableManagement = () => {
       <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
           <h2 className="font-semibold text-slate-900 dark:text-white">Current Schedule</h2>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
              <select
                value={selectedDay}
                onChange={(e) => setSelectedDay(e.target.value)}
