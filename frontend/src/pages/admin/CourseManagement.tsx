@@ -39,6 +39,7 @@ const CourseManagement = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [selectedDept, setSelectedDept] = useState<number | 'all'>('all');
 
   const {
     register,
@@ -185,6 +186,10 @@ const CourseManagement = () => {
   const getDeptName = (id: number) => departments.find((d) => d.id === id)?.name || '-';
   const getFacultyName = (id: number | null) => facultyList.find((f) => f.id === id)?.name || 'Unassigned';
 
+  const filteredCourses = selectedDept === 'all'
+    ? courses
+    : courses.filter((c) => c.departmentId === selectedDept);
+
   if (loading) return <Layout><Spinner className="min-h-[50vh] w-full" label="Loading courses..." /></Layout>;
 
   return (
@@ -257,10 +262,30 @@ const CourseManagement = () => {
       </div>
 
       <div className="bg-white dark:bg-slate-950 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 p-6">
-        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">All Courses</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h2 className="font-semibold text-slate-900 dark:text-white">All Courses</h2>
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">Filter by Dept:</label>
+            <select
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+              className="border border-slate-300 dark:border-slate-700 bg-transparent rounded-lg px-3 py-1.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            >
+              <option value="all" className="dark:bg-slate-900">All Departments</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id} className="dark:bg-slate-900">{d.name}</option>
+              ))}
+            </select>
+            {selectedDept !== 'all' && (
+              <span className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+        </div>
         <div className="space-y-2">
-          {courses.length === 0 && <p className="text-sm text-slate-400">No courses yet.</p>}
-          {courses.map((c) => (
+          {filteredCourses.length === 0 && <p className="text-sm text-slate-400">No courses{selectedDept !== 'all' ? ' in this department' : ''} yet.</p>}
+          {filteredCourses.map((c) => (
             <div key={c.id} className="border border-slate-100 dark:border-slate-800 rounded-lg">
               <div className="flex items-center justify-between p-3 min-w-0">
                 <div className="flex-1 min-w-0">
