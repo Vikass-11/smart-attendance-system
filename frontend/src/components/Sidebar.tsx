@@ -17,7 +17,7 @@ const Sidebar = () => {
 
   const studentLinks = [
     { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, shortLabel: 'Home' },
-    { to: '/dashboard/leave', label: 'Leave Requests', icon: ClipboardList, shortLabel: 'Leave' },
+    { to: '/dashboard/apply-leave', label: 'Leave Requests', icon: ClipboardList, shortLabel: 'Leave' },
     { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar, shortLabel: 'Time' },
   ];
 
