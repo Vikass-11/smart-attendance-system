@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { loginSchema } from '../schemas/authSchemas';
@@ -60,64 +60,66 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-6">
-      <div className="bg-white dark:bg-slate-950 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 w-full max-w-md p-8 relative z-10">
-        <div className="flex items-center gap-2 mb-8 justify-center">
-          <div className="bg-indigo-100 dark:bg-indigo-500/20 p-2 rounded-xl">
-            <GraduationCap className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
-          </div>
-          <span className="font-semibold text-lg text-slate-900 dark:text-white">EduFlow</span>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
+      <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl relative z-10">
+        
+        {/* Branding Title */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <GraduationCap className="w-8 h-8 text-indigo-400" />
+          <span className="text-xl font-bold text-white tracking-wide">EduFlow</span>
         </div>
 
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1 text-center">Welcome back</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 text-center">Sign in to continue to your dashboard</p>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-extrabold text-white tracking-tight">Welcome back</h2>
+          <p className="text-sm text-slate-400 mt-1">Sign in to continue to your dashboard</p>
+        </div>
 
         {justRegistered && (
-          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300 text-sm mb-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-400/20 rounded-lg p-3">
+          <div className="mb-4 flex items-center gap-2 text-emerald-400 text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             Account created successfully. Please log in.
           </div>
         )}
 
         {apiError && (
-          <div className="text-red-700 dark:text-red-300 text-sm mb-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-400/20 rounded-lg p-3">
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs font-semibold text-red-400">
             {apiError}
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Email</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Email Address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="email"
                 {...register('email')}
-                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                 placeholder="you@institution.edu"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/40 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
-            {errors.email && <p className="text-red-600 dark:text-red-300 text-xs mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-red-400 text-xs mt-1 font-semibold">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="password"
                 {...register('password')}
-                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 rounded-lg pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent"
                 placeholder="••••••••"
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/40 border border-white/10 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
-            {errors.password && <p className="text-red-600 dark:text-red-300 text-xs mt-1">{errors.password.message}</p>}
+            {errors.password && <p className="text-red-400 text-xs mt-1 font-semibold">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 dark:bg-indigo-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 dark:hover:bg-indigo-400 transition-colors disabled:opacity-50 shadow-md shadow-indigo-500/20 dark:shadow-indigo-500/30"
+            className="w-full mt-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/20 active:scale-[0.99] disabled:opacity-50"
           >
             {loading ? (
               <Spinner inline size="sm" variant="light" label="Signing in..." />
@@ -127,12 +129,14 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="text-sm text-center mt-6 text-slate-500 dark:text-slate-400">
-          Don't have an account?{' '}
-          <a href="/register" className="text-indigo-600 dark:text-indigo-300 font-medium hover:underline">
-            Register
-          </a>
-        </p>
+        <div className="text-center mt-6">
+          <p className="text-xs text-slate-400">
+            Don't have an account?{' '}
+            <Link to="/register" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

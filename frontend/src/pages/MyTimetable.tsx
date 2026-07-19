@@ -13,7 +13,7 @@ const MyTimetable = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await apiClient.get('/timetable/my-timetable');
+        const res = await apiClient.get('/timetable/my');
         setEntries(res.data);
       } catch (err) {
         console.error('Failed to load timetable', err);

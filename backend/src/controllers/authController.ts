@@ -39,6 +39,12 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
     return;
   }
 
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(password)) {
+    next(new AppError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.', 400, 'VALIDATION_ERROR'));
+    return;
+  }
+
   // Only 'student' and 'admin' are allowed at registration — 'faculty' is assigned by admins only
   if (!authService.isValidRegistrationRole(role)) {
     next(new AppError(

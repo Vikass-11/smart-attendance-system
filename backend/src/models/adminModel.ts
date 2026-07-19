@@ -121,6 +121,20 @@ export const deleteUserSoft = async (id: number): Promise<void> => {
 export const deleteDepartment = async (id: number): Promise<void> => {
   // First set department_id to NULL for all users in this department
   await db.query('UPDATE users SET department_id = NULL WHERE department_id = ?', [id]);
-  // Then delete the department (will fail if courses still reference it)
+  
+  // Find all courses for this department
+  const [courses]: any = await db.query('SELECT id FROM courses WHERE department_id = ?', [id]);
+  const courseIds = courses.map((c: any) => c.id);
+
+  if (courseIds.length > 0) {
+    // Delete course enrollments
+    await db.query('DELETE FROM course_enrollments WHERE course_id IN (?)', [courseIds]);
+    // Delete timetable slots
+    await db.query('DELETE FROM timetable_slots WHERE course_id IN (?)', [courseIds]);
+    // Delete courses
+    await db.query('DELETE FROM courses WHERE department_id = ?', [id]);
+  }
+
+  // Then delete the department
   await db.query('DELETE FROM departments WHERE id = ?', [id]);
 };
