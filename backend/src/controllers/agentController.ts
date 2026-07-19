@@ -97,3 +97,20 @@ export const getChatHistory = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// 4. Handles fetching all previous sessions for a user
+export const getChatSessions = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user; 
+
+    if (!user) {
+      return res.status(401).json({ error: 'Unauthorized. User context missing.' });
+    }
+
+    const sessions = await agentService.fetchUserChatSessions(user.id);
+    return res.json(sessions);
+  } catch (error) {
+    console.error("Error fetching chat sessions:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};

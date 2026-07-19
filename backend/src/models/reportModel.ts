@@ -110,7 +110,12 @@ export const getInstitutionSummaryData = async (fromDate: string, toDate: string
   const paginatedBD = formattedBD.slice(filters.offset, filters.offset + filters.limit);
 
   return {
-    summary: { totalStudents: overall.totalStudents, overallAttendanceRate },
+    summary: { 
+      total_students: overall.totalStudents, 
+      overall_percentage: overallAttendanceRate,
+      total_present: overall.presentCount,
+      total_absent: overall.absentCount
+    },
     departmentBreakdown: paginatedBD,
     departmentBreakdownMeta: { total: totalBreakdownCount, page: filters.page, limit: filters.limit }
   };

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { verifyToken } from '../middleware/auth';
-import { handleChat, confirmAction, getChatHistory } from '../controllers/agentController';
+import { handleChat, confirmAction, getChatHistory, getChatSessions } from '../controllers/agentController';
 
 const router = Router();
 
@@ -15,5 +15,8 @@ router.post('/confirm', confirmAction);
 
 // History endpoint to fetch past logs when opening the chat window
 router.get('/history/:conversationId', getChatHistory);
+
+// Endpoint to fetch all past sessions
+router.get('/sessions', getChatSessions);
 
 export default router;

@@ -250,3 +250,16 @@ export const getMessagesBySession = async (conversationId: string, userId: numbe
     pendingConfirmation: null
   }));
 };
+
+export const fetchUserChatSessions = async (userId: number): Promise<any[]> => {
+  // Fetch sessions for the user, and left join to get the first user message as a preview
+  const [rows]: any = await db.execute(
+    `SELECT cs.id as sessionId, 
+            (SELECT content FROM chat_messages cm WHERE cm.session_id = cs.id AND cm.role = 'user' ORDER BY id ASC LIMIT 1) as preview
+     FROM chat_sessions cs
+     WHERE cs.user_id = ?
+     ORDER BY cs.id DESC`, // Using session id as rough proxy for time since we don't know if created_at exists on chat_sessions
+    [userId]
+  );
+  return rows;
+};
