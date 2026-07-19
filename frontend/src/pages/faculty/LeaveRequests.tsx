@@ -8,8 +8,8 @@ import { useDashboardStore } from '../../store/dashboardStore';
 interface PendingLeave {
   id: number;
   reason: string;
-  from_date: string;
-  to_date: string;
+  fromDate: string;
+  toDate: string;
   student_name: string;
 }
 
@@ -76,7 +76,7 @@ const LeaveRequests = () => {
                 <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-0.5">"{lr.reason}"</p>
               </div>
               <p className="text-[11px] text-slate-400 font-medium tracking-wide">
-                Timeline: {new Date(lr.from_date).toLocaleDateString()} - {new Date(lr.to_date).toLocaleDateString()}
+                Timeline: {new Date(lr.fromDate).toLocaleDateString()} - {new Date(lr.toDate).toLocaleDateString()}
               </p>
               <div className="flex gap-2 pt-1">
                 <button

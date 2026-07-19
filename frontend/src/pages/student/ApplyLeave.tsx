@@ -13,8 +13,8 @@ import type { AxiosError } from 'axios';
 interface LeaveRequest {
   id: number;
   reason: string;
-  from_date: string;
-  to_date: string;
+  fromDate: string;
+  toDate: string;
   status: string;
   created_at: string;
 }
@@ -178,7 +178,7 @@ const ApplyLeave = () => {
                   <div className="space-y-1">
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">"{lr.reason}"</p>
                     <p className="text-[10px] font-medium text-slate-400">
-                      Span: {new Date(lr.from_date).toLocaleDateString()} — {new Date(lr.to_date).toLocaleDateString()}
+                      Span: {new Date(lr.fromDate).toLocaleDateString()} — {new Date(lr.toDate).toLocaleDateString()}
                     </p>
                   </div>
                   <span className={statusBadge(lr.status)}>{lr.status}</span>
