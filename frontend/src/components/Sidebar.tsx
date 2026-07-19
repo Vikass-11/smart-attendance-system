@@ -5,12 +5,12 @@ import {
   FileText,
   Users,
   Building2,
-  GraduationCap,
   ClipboardList,
   Calendar,
   BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import eduflowIcon from '../assets/eduflow-icon.png';
 
 const Sidebar = () => {
   const { appUser } = useAuth();
@@ -43,11 +43,9 @@ const Sidebar = () => {
     <>
       <aside className="hidden md:flex md:sticky md:top-0 md:h-screen md:w-52 md:shrink-0 md:flex-col md:border-r md:border-slate-200/80 md:bg-slate-50/80 md:p-3 dark:md:border-slate-800/80 dark:md:bg-slate-950 transition-colors duration-200">
         <div className="flex items-center gap-2.5 px-2 py-3 mb-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600 text-white">
-            <GraduationCap className="h-3.5 w-3.5" />
-          </div>
+          <img src={eduflowIcon} alt="EduFlow" className="h-7 w-7 shrink-0 rounded-md object-cover" />
           <span className="text-xs font-bold tracking-tight text-slate-800 dark:text-slate-200 leading-tight">
-            Smart Attendance
+            EduFlow
           </span>
         </div>
 
