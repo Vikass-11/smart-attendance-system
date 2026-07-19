@@ -3,7 +3,7 @@ import { agentTools } from './agentTools';
 import * as attendanceService from './attendanceService';
 import * as timetableService from './timetableService';
 import * as courseService from './courseService';
-import db from '../config/db'; 
+import db from '../config/db';
 
 let openaiInstance: OpenAI | null = null;
 
@@ -46,12 +46,12 @@ async function findStudentIdByName(name: string): Promise<number | null> {
 
 async function getOrCreateSession(conversationId: string, userId: number, userContext: any): Promise<any[]> {
   const [sessionRows]: any = await db.execute('SELECT user_id FROM chat_sessions WHERE id = ?', [conversationId]);
-  
+
   if (sessionRows.length === 0) {
     await db.execute('INSERT INTO chat_sessions (id, user_id) VALUES (?, ?)', [conversationId, userId]);
-    
+
     // Updated instructions to enforce read-only expectations and student name lookups
-    const systemPrompt = `You are a helpful and intelligent AI Assistant for the Smart Attendance System.
+    const systemPrompt = `You are a helpful and intelligent AI Assistant for the EduFlow.
 Current User Context:
 - User ID: ${userContext.id}
 - Name: ${userContext.name}
@@ -105,7 +105,7 @@ async function saveMessage(conversationId: string, role: string, content: string
 export const chat = async (conversationId: string, message: string, user: any): Promise<any> => {
   const openai = getOpenAIClient();
   const messages = await getOrCreateSession(conversationId, user.id, user);
-  
+
   await saveMessage(conversationId, 'user', message);
   messages.push({ role: 'user', content: message });
 
@@ -124,7 +124,7 @@ export const chat = async (conversationId: string, message: string, user: any): 
     while (toolCalls && toolCalls.length > 0) {
       const assistantContent = choice.message.content || '';
       await saveMessage(conversationId, 'assistant', assistantContent, toolCalls);
-      
+
       messages.push({
         role: 'assistant',
         content: assistantContent,
@@ -140,15 +140,15 @@ export const chat = async (conversationId: string, message: string, user: any): 
 
         try {
           if (functionName === 'get_my_attendance_history') {
-            toolResult = user.role !== 'student' 
-              ? { error: 'Only student accounts can fetch their history.' } 
+            toolResult = user.role !== 'student'
+              ? { error: 'Only student accounts can fetch their history.' }
               : await attendanceService.fetchStudentHistory(user.id);
-          } 
+          }
           else if (functionName === 'get_my_attendance_percentage') {
-            toolResult = user.role !== 'student' 
-              ? { error: 'Only student accounts can fetch percentage.' } 
+            toolResult = user.role !== 'student'
+              ? { error: 'Only student accounts can fetch percentage.' }
               : await attendanceService.computeAttendancePercentage(user.id);
-          } 
+          }
           // 👉 NEW READ TOOL HANDLER: Fetches another student's history by their name (Admin/Faculty only)
           else if (functionName === 'get_student_attendance_history') {
             if (user.role !== 'faculty' && user.role !== 'admin') {
@@ -165,25 +165,25 @@ export const chat = async (conversationId: string, message: string, user: any): 
             }
           }
           else if (functionName === 'get_class_attendance') {
-            toolResult = (user.role !== 'faculty' && user.role !== 'admin') 
-              ? { error: 'Unauthorized.' } 
+            toolResult = (user.role !== 'faculty' && user.role !== 'admin')
+              ? { error: 'Unauthorized.' }
               : await attendanceService.fetchClassAttendance(args.date);
-          } 
+          }
           else if (functionName === 'get_low_attendance_students') {
-            toolResult = (user.role !== 'faculty' && user.role !== 'admin') 
-              ? { error: 'Unauthorized.' } 
+            toolResult = (user.role !== 'faculty' && user.role !== 'admin')
+              ? { error: 'Unauthorized.' }
               : await attendanceService.fetchLowAttendanceStudents(args.threshold ?? 75);
-          } 
+          }
           else if (functionName === 'get_my_timetable') {
-            toolResult = user.role === 'student' 
-              ? await timetableService.fetchStudentTimetable(user.id) 
+            toolResult = user.role === 'student'
+              ? await timetableService.fetchStudentTimetable(user.id)
               : await timetableService.fetchFacultyTimetable(user.id);
-          } 
+          }
           else if (functionName === 'get_my_courses') {
-            toolResult = user.role === 'student' 
-              ? await courseService.fetchStudentCourses(user.id) 
+            toolResult = user.role === 'student'
+              ? await courseService.fetchStudentCourses(user.id)
               : await courseService.fetchCoursesByFaculty(user.id);
-          } 
+          }
           else {
             toolResult = { error: 'Tool unrecognized.' };
           }
@@ -193,7 +193,7 @@ export const chat = async (conversationId: string, message: string, user: any): 
 
         const toolContent = JSON.stringify(toolResult);
         await saveMessage(conversationId, 'tool', toolContent, null, toolCall.id);
-        
+
         messages.push({
           role: 'tool',
           tool_call_id: toolCall.id,
@@ -225,18 +225,18 @@ export const chat = async (conversationId: string, message: string, user: any): 
 };
 
 export const confirmPendingAction = async (conversationId: string, confirmed: boolean, user: any): Promise<any> => {
-  return { 
-    reply: 'Action confirmation is disabled. The assistant is configured in read-only mode.', 
-    pendingConfirmation: null, 
-    conversationId 
+  return {
+    reply: 'Action confirmation is disabled. The assistant is configured in read-only mode.',
+    pendingConfirmation: null,
+    conversationId
   };
 };
 
 export const getMessagesBySession = async (conversationId: string, userId: number): Promise<any[]> => {
   const [sessionRows]: any = await db.execute('SELECT user_id FROM chat_sessions WHERE id = ?', [conversationId]);
-  
+
   if (sessionRows.length === 0 || sessionRows[0].user_id !== userId) {
-    return []; 
+    return [];
   }
 
   const [rows]: any = await db.execute(

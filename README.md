@@ -1,4 +1,4 @@
-# Smart Attendance System
+# EduFlow
 
 A modern, full-stack web application designed to streamline attendance tracking and management for educational institutions and organizations. The system features a robust backend API, a responsive frontend dashboard, and an integrated AI-powered attendance assistant.
 

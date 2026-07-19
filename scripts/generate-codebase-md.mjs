@@ -76,7 +76,7 @@ function langFor(filePath) {
 }
 
 const lines = [];
-lines.push('# Smart Attendance System - Complete Codebase');
+lines.push('# EduFlow - Complete Codebase');
 lines.push('');
 lines.push(`Generated on: ${new Date().toISOString().slice(0, 19).replace('T', ' ')}`);
 lines.push('');

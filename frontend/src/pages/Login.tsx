@@ -65,7 +65,7 @@ const Login = () => {
           <div className="bg-indigo-100 dark:bg-indigo-500/20 p-2 rounded-xl">
             <GraduationCap className="w-6 h-6 text-indigo-600 dark:text-indigo-300" />
           </div>
-          <span className="font-semibold text-lg text-slate-900 dark:text-white">Smart Attendance System</span>
+          <span className="font-semibold text-lg text-slate-900 dark:text-white">EduFlow</span>
         </div>
 
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1 text-center">Welcome back</h2>

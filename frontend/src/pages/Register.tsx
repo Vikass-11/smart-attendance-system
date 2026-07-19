@@ -11,7 +11,7 @@ interface DepartmentRecord {
 
 const Register = () => {
   const navigate = useNavigate();
-  
+
   // Form Inputs
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -61,8 +61,8 @@ const Register = () => {
         name,
         email,
         password,
-        role: 'student', 
-        departmentId: Number(departmentId) 
+        role: 'student',
+        departmentId: Number(departmentId)
       });
 
       navigate('/login');
@@ -77,11 +77,11 @@ const Register = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4">
       <div className="w-full max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
-        
+
         {/* Branding Title */}
         <div className="flex items-center justify-center gap-2 mb-6">
           <GraduationCap className="w-8 h-8 text-indigo-400" />
-          <span className="text-xl font-bold text-white tracking-wide">Smart Attendance System</span>
+          <span className="text-xl font-bold text-white tracking-wide">EduFlow</span>
         </div>
 
         <div className="text-center mb-8">
@@ -97,7 +97,7 @@ const Register = () => {
 
         {/* Security configuration prevents basic browser cache injection fields */}
         <form onSubmit={handleRegisterSubmit} autoComplete="new-password" name="signup-secure-matrix" className="space-y-4">
-          
+
           {/* Full Name Input */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Full Name</label>
