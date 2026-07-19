@@ -52,7 +52,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('EduFlow API is running.');
+  res.send('Campus360 API is running.');
 });
 
 app.get('/favicon.ico', (req, res) => res.status(204).end());

@@ -82,7 +82,7 @@ const Register = () => {
         {/* Branding Title */}
         <div className="flex items-center justify-center gap-2 mb-6">
           <GraduationCap className="w-8 h-8 text-indigo-400" />
-          <span className="text-xl font-bold text-white tracking-wide">EduFlow</span>
+          <span className="text-xl font-bold text-white tracking-wide">Campus360</span>
         </div>
 
         <div className="text-center mb-8">

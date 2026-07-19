@@ -43,9 +43,9 @@ const Sidebar = () => {
     <>
       <aside className="hidden md:flex md:sticky md:top-0 md:h-screen md:w-52 md:shrink-0 md:flex-col md:border-r md:border-slate-200/80 md:bg-slate-50/80 md:p-3 dark:md:border-slate-800/80 dark:md:bg-slate-950 transition-colors duration-200">
         <div className="flex items-center gap-2.5 px-2 py-3 mb-2">
-          <img src={eduflowIcon} alt="EduFlow" className="h-7 w-7 shrink-0 rounded-md object-cover" />
+          <img src={eduflowIcon} alt="Campus360" className="h-7 w-7 shrink-0 rounded-md object-cover" />
           <span className="text-xs font-bold tracking-tight text-slate-800 dark:text-slate-200 leading-tight">
-            EduFlow
+            Campus360
           </span>
         </div>
 

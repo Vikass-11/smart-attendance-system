@@ -51,7 +51,7 @@ async function getOrCreateSession(conversationId: string, userId: number, userCo
     await db.execute('INSERT INTO chat_sessions (id, user_id) VALUES (?, ?)', [conversationId, userId]);
 
     // Updated instructions to enforce read-only expectations and student name lookups
-    const systemPrompt = `You are a helpful and intelligent AI Assistant for the EduFlow.
+    const systemPrompt = `You are a helpful and intelligent AI Assistant for the Campus360.
 Current User Context:
 - User ID: ${userContext.id}
 - Name: ${userContext.name}
