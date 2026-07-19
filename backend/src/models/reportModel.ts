@@ -93,12 +93,12 @@ export const getInstitutionSummaryData = async (fromDate: string, toDate: string
     const absent = Number(row.absentCount);
     const late = Number(row.lateCount);
     const total = present + absent + late;
-    const attendanceRate = total > 0 ? Math.round(((present + late * 0.5) / total) * 100) : 0;
-    return { department: row.department, studentCount: row.studentCount, attendanceRate };
+    const percentage = total > 0 ? Math.round(((present + late * 0.5) / total) * 100) : 0;
+    return { department: row.department, studentCount: row.studentCount, percentage };
   });
 
   if (filters.sortBy === 'attendanceRate') {
-    formattedBD.sort((a: any, b: any) => filters.sortOrder === 'desc' ? b.attendanceRate - a.attendanceRate : a.attendanceRate - b.attendanceRate);
+    formattedBD.sort((a: any, b: any) => filters.sortOrder === 'desc' ? b.percentage - a.percentage : a.percentage - b.percentage);
   } else {
     formattedBD.sort((a: any, b: any) => {
       const comp = a.department.localeCompare(b.department);

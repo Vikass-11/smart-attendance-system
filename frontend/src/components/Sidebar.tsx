@@ -17,14 +17,15 @@ const Sidebar = () => {
 
   const studentLinks = [
     { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, shortLabel: 'Home' },
+    { to: '/dashboard/leave', label: 'Leave Requests', icon: ClipboardList, shortLabel: 'Leave' },
     { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar, shortLabel: 'Time' },
   ];
 
   const facultyLinks = [
     { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, shortLabel: 'Home' },
+    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar, shortLabel: 'Time' },
     { to: '/dashboard/attendance', label: 'Mark Attendance', icon: CalendarCheck, shortLabel: 'Mark' },
     { to: '/dashboard/leave', label: 'Leave Requests', icon: ClipboardList, shortLabel: 'Leave' },
-    { to: '/dashboard/timetable', label: 'Timetable', icon: Calendar, shortLabel: 'Time' },
   ];
 
   const adminLinks = [
