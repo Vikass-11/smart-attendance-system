@@ -184,6 +184,16 @@ export const chat = async (conversationId: string, message: string, user: any): 
               ? await courseService.fetchStudentCourses(user.id)
               : await courseService.fetchCoursesByFaculty(user.id);
           }
+          else if (functionName === 'get_all_courses') {
+            toolResult = user.role !== 'admin'
+              ? { error: 'Unauthorized.' }
+              : await courseService.fetchAllCourses();
+          }
+          else if (functionName === 'get_high_attendance_students') {
+            toolResult = user.role !== 'faculty'
+              ? { error: 'Only faculty members can access this.' }
+              : await attendanceService.fetchHighAttendanceStudents(user.departmentId, args.threshold ?? 75);
+          }
           else {
             toolResult = { error: 'Tool unrecognized.' };
           }

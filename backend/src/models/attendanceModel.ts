@@ -80,3 +80,28 @@ export const getLowAttendanceList = async (threshold: number): Promise<any[]> =>
     return { id: row.id, name: row.name, email: row.email, present, absent, late, total, percentage };
   }).filter((s: any) => s.percentage < threshold);
 };
+
+export const getHighAttendanceListByDept = async (departmentId: number, threshold: number): Promise<any[]> => {
+  const [rows]: any = await db.query(
+    `SELECT u.id, u.name, u.email,
+       COALESCE(SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END), 0) as present,
+       COALESCE(SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END), 0) as absent,
+       COALESCE(SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END), 0) as late,
+       COUNT(a.id) as total
+     FROM users u
+     LEFT JOIN attendance a ON u.id = a.student_id
+     WHERE u.role = 'student' AND u.is_active = 1 AND u.department_id = ?
+     GROUP BY u.id`,
+     [departmentId]
+  );
+
+  return rows.map((row: any) => {
+    const present = Number(row.present);
+    const absent = Number(row.absent);
+    const late = Number(row.late);
+    const total = Number(row.total);
+    const effectivePresent = present + (late * 0.5);
+    const percentage = total > 0 ? Math.round((effectivePresent / total) * 100) : 100;
+    return { id: row.id, name: row.name, email: row.email, present, absent, late, total, percentage };
+  }).filter((s: any) => s.percentage >= threshold);
+};

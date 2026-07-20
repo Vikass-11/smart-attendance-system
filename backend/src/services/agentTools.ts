@@ -78,4 +78,25 @@ export const agentTools: ChatCompletionTool[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'get_all_courses',
+      description: 'Get a list of all courses available in the system (Admin only).',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_high_attendance_students',
+      description: 'Fetch students in the current faculty\'s department with attendance percentages above a specific threshold (Faculty only).',
+      parameters: {
+        type: 'object',
+        properties: {
+          threshold: { type: 'number', description: 'The threshold percentage (e.g. 75).' },
+        },
+      },
+    },
+  },
 ];

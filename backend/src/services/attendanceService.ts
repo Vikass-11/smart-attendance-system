@@ -6,3 +6,4 @@ export const fetchStudentHistory = async (studentId: number) => attendanceModel.
 export const computeAttendancePercentage = async (studentId: number) => attendanceModel.getAttendanceSummary(studentId);
 export const fetchClassAttendance = async (date: string) => attendanceModel.getDailyClassAttendance(date);
 export const fetchLowAttendanceStudents = async (threshold: number) => attendanceModel.getLowAttendanceList(threshold);
+export const fetchHighAttendanceStudents = async (departmentId: number, threshold: number) => attendanceModel.getHighAttendanceListByDept(departmentId, threshold);
