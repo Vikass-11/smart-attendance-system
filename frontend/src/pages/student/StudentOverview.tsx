@@ -7,8 +7,8 @@ import Spinner from '../../components/Spinner';
 import { useDashboardStore } from '../../store/dashboardStore';
 
 interface PercentageData {
-  totalDays: number;
-  presentDays: number;
+  total: number;
+  present: number;
   percentage: number;
 }
 
@@ -59,8 +59,8 @@ const StudentOverview = () => {
   }
 
   const rate = percentage?.percentage ?? 0;
-  const total = percentage?.totalDays ?? 0;
-  const present = percentage?.presentDays ?? 0;
+  const total = percentage?.total ?? 0;
+  const present = percentage?.present ?? 0;
   const absent = total - present;
   const isBreached = rate < 75;
 
